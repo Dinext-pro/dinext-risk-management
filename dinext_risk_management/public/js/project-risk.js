@@ -227,10 +227,46 @@ async function renderRiskMatrixWrapper(frm) {
     }
 }
 
+function scheduleRiskMatrixRender(frm) {
+    if (!frm.doc.name || frm.is_new()) return;
+    var field = frm.fields_dict['custom_risk_matrix'];
+    if (!field || !field.$wrapper || !field.$wrapper.length) return;
+    var $container = field.$wrapper.find('.risk-matrix-chart-container');
+    var containerVisible = $container.length && $container.is(':visible') && $container.width() > 0 && $container.height() > 0;
+    if (containerVisible && frm._risk_matrix_chart) {
+        frm._risk_matrix_chart.resize();
+        return;
+    }
+    renderRiskMatrixWrapper(frm).then(function() {
+        if (frm._risk_matrix_chart && !containerVisible) {
+            setTimeout(function() {
+                if (frm._risk_matrix_chart) frm._risk_matrix_chart.resize();
+            }, 100);
+        }
+    });
+}
+
+function bindRiskTabListenerOnce(frm) {
+    if (frm._risk_tab_listener_bound) return;
+    var $wrapper = frm.$wrapper || (frm.wrapper && $(frm.wrapper));
+    if (!$wrapper || !$wrapper.length) return;
+    $wrapper.on('shown.bs.tab', '[data-fieldname="custom_риски"]', function() {
+        if (frm._risk_matrix_chart) {
+            setTimeout(function() {
+                if (frm._risk_matrix_chart) frm._risk_matrix_chart.resize();
+            }, 50);
+        } else {
+            scheduleRiskMatrixRender(frm);
+        }
+    });
+    frm._risk_tab_listener_bound = true;
+}
+
 frappe.ui.form.on('Project', {
     refresh: function(frm) {
         if (frm.doc.name && !frm.is_new()) {
-            renderRiskMatrixWrapper(frm);
+            scheduleRiskMatrixRender(frm);
+            bindRiskTabListenerOnce(frm);
         }
     }
 });
