@@ -5,6 +5,42 @@ app_description = "Dinext Project Risk Management"
 app_email = "info@dinext.ru"
 app_license = "mit"
 
+fixtures = [
+    "Risk Mitigation Strategy", 
+    "Risk Priority",
+    "Risk Probability",
+    "Risk Level",
+    "Risk Category",
+    "Risk Impact",
+    {
+        "doctype": "Custom Field",
+        "filters": [
+            ["module", "in", ["Dinext Risk Management"]]
+        ]
+    },
+    {
+        "doctype": "Client Script",
+        "filters": [
+            ["module", "in", ["Dinext Risk Management"]],
+            ["enabled", "=", 1]
+        ]
+    },
+    {
+        "doctype": "Server Script",
+        "filters": [
+            ["module", "in", ["Dinext Risk Management"]],
+            ["disabled", "=", 0]
+        ]
+    },
+    {
+        "doctype": "Role",
+        "filters": [
+            ["name", "in", ["Dinext Risk Management"]],
+            ["disabled", "=", 0]
+        ]
+    }
+]
+
 # Apps
 # ------------------
 
@@ -44,6 +80,7 @@ app_license = "mit"
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {"Project" : "public/js/project-risk.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}

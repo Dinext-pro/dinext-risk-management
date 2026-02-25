@@ -1,0 +1,52 @@
+[
+ {
+  "color_dark_theme": "#f20707",
+  "color_light_theme": "#CB2929",
+  "docstatus": 0,
+  "doctype": "Risk Level",
+  "enabled": 1,
+  "modified": "2026-01-25 15:39:01.247465",
+  "name": "Критический",
+  "value": 20
+ },
+ {
+  "color_dark_theme": "#EC864B",
+  "color_light_theme": "#EC864B",
+  "docstatus": 0,
+  "doctype": "Risk Level",
+  "enabled": 1,
+  "modified": "2026-01-25 15:39:01.734011",
+  "name": "Высокий",
+  "value": 15
+ },
+ {
+  "color_dark_theme": "#ECAD4B",
+  "color_light_theme": "#ECAD4B",
+  "docstatus": 0,
+  "doctype": "Risk Level",
+  "enabled": 1,
+  "modified": "2026-01-25 15:39:02.283749",
+  "name": "Значительный",
+  "value": 10
+ },
+ {
+  "color_dark_theme": "#29CD42",
+  "color_light_theme": "#29CD42",
+  "docstatus": 0,
+  "doctype": "Risk Level",
+  "enabled": 1,
+  "modified": "2026-01-25 15:39:02.823672",
+  "name": "Умеренный",
+  "value": 5
+ },
+ {
+  "color_dark_theme": "#29CD42",
+  "color_light_theme": "#29CD42",
+  "docstatus": 0,
+  "doctype": "Risk Level",
+  "enabled": 1,
+  "modified": "2026-01-25 15:39:24.969038",
+  "name": "Низкий",
+  "value": 0
+ }
+]

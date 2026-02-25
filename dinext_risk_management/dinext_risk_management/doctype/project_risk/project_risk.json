@@ -1,0 +1,165 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2026-01-25 16:53:42.805439",
+ "description": "Project Risk",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "subject",
+  "description",
+  "status",
+  "category",
+  "priority",
+  "impact",
+  "probability",
+  "level",
+  "strategy",
+  "task",
+  "owner_link_doctype",
+  "owner_person",
+  "responsible_link_doctype",
+  "responsible_person"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "\u0420\u0438\u0441\u043a",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text",
+   "label": "\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435"
+  },
+  {
+   "columns": 1,
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Open\nIn Progress\nRealized\nClosed",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "category",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "\u041a\u0430\u0442\u0435\u0433\u043e\u0440\u0438\u044f",
+   "mandatory_depends_on": "eval:doc.status != 'Open'",
+   "options": "Risk Category"
+  },
+  {
+   "columns": 1,
+   "fieldname": "priority",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "\u041f\u0440\u0438\u043e\u0440\u0438\u0442\u0435\u0442",
+   "mandatory_depends_on": "eval:doc.status != 'Open'",
+   "options": "Risk Priority"
+  },
+  {
+   "columns": 1,
+   "fieldname": "impact",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "\u0412\u043b\u0438\u044f\u043d\u0438\u0435",
+   "mandatory_depends_on": "eval:doc.status != 'Open'",
+   "options": "Risk Impact"
+  },
+  {
+   "columns": 1,
+   "fieldname": "probability",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "\u0412\u0435\u0440\u043e\u044f\u0442\u043d\u043e\u0441\u0442\u044c",
+   "mandatory_depends_on": "eval:doc.status != 'Open'",
+   "options": "Risk Probability"
+  },
+  {
+   "columns": 1,
+   "fieldname": "level",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "\u0423\u0440\u043e\u0432\u0435\u043d\u044c",
+   "options": "Risk Level",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "strategy",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "\u0421\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u044f",
+   "mandatory_depends_on": "eval:doc.status != 'Open'",
+   "options": "Risk Mitigation Strategy"
+  },
+  {
+   "fieldname": "task",
+   "fieldtype": "Link",
+   "label": "\u0417\u0430\u0434\u0430\u0447\u0430",
+   "options": "Task"
+  },
+  {
+   "default": "Contact",
+   "fieldname": "owner_link_doctype",
+   "fieldtype": "Select",
+   "label": "\u0422\u0438\u043f \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430 \u0440\u0438\u0441\u043a\u0430",
+   "mandatory_depends_on": "eval:doc.status != 'Open'",
+   "options": "User\nContact"
+  },
+  {
+   "fieldname": "owner_person",
+   "fieldtype": "Dynamic Link",
+   "label": "\u0412\u043b\u0430\u0434\u0435\u043b\u0435\u0446 \u0440\u0438\u0441\u043a\u0430",
+   "mandatory_depends_on": "eval:doc.status != 'Open'",
+   "options": "owner_link_doctype"
+  },
+  {
+   "default": "Contact",
+   "fieldname": "responsible_link_doctype",
+   "fieldtype": "Select",
+   "label": "\u0422\u0438\u043f \u043e\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u0433\u043e",
+   "mandatory_depends_on": "eval:doc.status != 'Open'",
+   "options": "User\nUser Group\nContact"
+  },
+  {
+   "fieldname": "responsible_person",
+   "fieldtype": "Dynamic Link",
+   "label": "\u041e\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0435\u043d\u043d\u044b\u0439",
+   "mandatory_depends_on": "eval:doc.status != 'Open'",
+   "options": "responsible_link_doctype"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-02-25 23:20:17.982383",
+ "modified_by": "Administrator",
+ "module": "Dinext Risk Management",
+ "name": "Project Risk",
+ "naming_rule": "Autoincrement",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

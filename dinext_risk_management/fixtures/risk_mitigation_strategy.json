@@ -1,0 +1,42 @@
+[
+ {
+  "description": "Изменить требования или процесс для полного устранения риска",
+  "docstatus": 0,
+  "doctype": "Risk Mitigation Strategy",
+  "enabled": 1,
+  "modified": "2026-01-20 02:13:52.682077",
+  "name": "Избегать"
+ },
+ {
+  "description": "Внедрить меры по снижению вероятности или воздействия риска",
+  "docstatus": 0,
+  "doctype": "Risk Mitigation Strategy",
+  "enabled": 1,
+  "modified": "2026-01-20 02:14:25.510783",
+  "name": "Снизить"
+ },
+ {
+  "description": "Переложить риск на третью сторону (например, через контракты или страхование)",
+  "docstatus": 0,
+  "doctype": "Risk Mitigation Strategy",
+  "enabled": 1,
+  "modified": "2026-01-20 02:14:51.787926",
+  "name": "Передать"
+ },
+ {
+  "description": "Признать риск, но не предпринимать немедленных действий (используется для рисков очень низкого приоритета)",
+  "docstatus": 0,
+  "doctype": "Risk Mitigation Strategy",
+  "enabled": 1,
+  "modified": "2026-01-20 02:15:13.401770",
+  "name": "Принять"
+ },
+ {
+  "description": "Регулярно наблюдать за риском для выявления изменений в вероятности или воздействии",
+  "docstatus": 0,
+  "doctype": "Risk Mitigation Strategy",
+  "enabled": 1,
+  "modified": "2026-01-25 19:00:14.156445",
+  "name": "Мониторить"
+ }
+]
