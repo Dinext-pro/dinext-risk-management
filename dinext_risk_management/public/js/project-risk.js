@@ -118,8 +118,9 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
         frm._risk_matrix_chart = null;
     }
     field.$wrapper.find('.risk-matrix-chart-container').remove();
-    // Увеличенный размер с квадратным aspect ratio
-    var chartDiv = $('<div class="risk-matrix-chart-container" style="width:min(30vw, 600px); aspect-ratio: 1.3; max-width:800px;"></div>');
+    var isDark = document.body.classList.contains('dark') || (document.documentElement.getAttribute('data-theme-mode') === 'dark');
+    var axisTextColor = isDark ? '#e0e0e0' : '#374151';
+    var chartDiv = $('<div class="risk-matrix-chart-container" style="width:min(54vw, 864px); aspect-ratio: 2.7; max-width:960px;"></div>');
     field.$wrapper.append(chartDiv);
     var chart = echarts.init(chartDiv[0]);
     var data = [];
@@ -149,34 +150,49 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
                     (__('Количество рисков') + ': ' + (it.count || 0));
             }
         },
-        // Уменьшенные отступы для компактности
-        grid: { 
-            left: '80px',    // уменьшено с 120px
-            right: '20px',   // уменьшено с 50px
-            top: '20px',     // уменьшено с 50px
-            bottom: '60px',  // уменьшено с 100px
-            containLabel: true  // автоматически подгонять под метки
+        grid: {
+            left: '68px',
+            right: '58px',
+            top: '28px',
+            bottom: '50px',
+            containLabel: true
         },
         xAxis: {
             type: 'category',
             data: impacts.map(function(x) { return x.name; }),
             name: __('Влияние'),
             nameLocation: 'middle',
-            nameGap: 30,  // уменьшено с 40
-            nameTextStyle: { fontSize: 12 },  // добавлено для компактности
-            axisLabel: { fontSize: 11 },  // добавлено для компактности
+            nameGap: 30,
+            nameTextStyle: { fontSize: 12, color: axisTextColor },
+            axisLabel: { fontSize: 10, color: axisTextColor, interval: 0, margin: 10 },
             splitArea: { show: true }
         },
-        yAxis: {
-            type: 'category',
-            data: probabilities.map(function(x) { return x.name; }),
-            name: __('Вероятность'),
-            nameLocation: 'middle',
-            nameGap: 50,  // уменьшено с 60
-            nameTextStyle: { fontSize: 12 },  // добавлено для компактности
-            axisLabel: { fontSize: 11 },  // добавлено для компактности
-            splitArea: { show: true }
-        },
+        yAxis: [
+            {
+                type: 'category',
+                data: probabilities.map(function(x) { return x.name; }),
+                name: __('Вероятность'),
+                nameLocation: 'middle',
+                nameGap: 35,
+                nameTextStyle: { fontSize: 12, color: axisTextColor },
+                axisLabel: { show: false },
+                splitArea: { show: true }
+            },
+            {
+                type: 'category',
+                data: probabilities.map(function(x) { return x.name; }),
+                position: 'right',
+                name: '',
+                nameLocation: 'middle',
+                nameGap: 40,
+                nameTextStyle: { fontSize: 12, color: axisTextColor },
+                axisLine: { show: false },
+                axisTick: { show: false },
+                axisLabel: { show: true, fontSize: 11, color: axisTextColor, margin: 10 },
+                splitLine: { show: false },
+                splitArea: { show: false }
+            }
+        ],
         series: [{
             name: __('Риски'),
             type: 'heatmap',
