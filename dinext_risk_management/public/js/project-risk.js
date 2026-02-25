@@ -30,6 +30,18 @@ function getColor(level) {
     return c || '#cccccc';
 }
 
+function getContrastColor(hex) {
+    if (!hex || typeof hex !== 'string') return '#000';
+    var h = hex.replace(/^#/, '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    if (h.length !== 6) return '#000';
+    var r = parseInt(h.slice(0, 2), 16);
+    var g = parseInt(h.slice(2, 4), 16);
+    var b = parseInt(h.slice(4, 6), 16);
+    var luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5 ? '#000' : '#fff';
+}
+
 function buildMatrixData(frm, impacts, probabilities, levels) {
     var matrix = [];
     var risks = frm.doc.custom_project_risks || [];
@@ -55,8 +67,7 @@ function buildMatrixData(frm, impacts, probabilities, levels) {
                 score: score,
                 level: level ? level.name : '',
                 color: getColor(level),
-                count: count,
-                labelColor: count === 0 ? 'rgba(128, 128, 128, 0.3)' : '#000'  // затемненный серый для нулей
+                count: count
             });
         }
     }
@@ -114,7 +125,15 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
     var data = [];
     for (var i = 0; i < matrixData.length; i++) {
         var m = matrixData[i];
-        data.push([m.impact, m.probability, m.count]);
+        var contrast = getContrastColor(m.color);
+        var labelColor = m.count === 0
+            ? (contrast === '#fff' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.35)')
+            : contrast;
+        data.push({
+            value: [m.impact, m.probability, m.count],
+            itemStyle: { color: m.color },
+            label: { color: labelColor }
+        });
     }
     var maxCount = 0;
     for (var j = 0; j < matrixData.length; j++) {
@@ -166,21 +185,11 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
             label: { 
                 show: true, 
                 formatter: function(params) {
-                    return params.value[2]; // показываем только count
+                    var v = params.value;
+                    return Array.isArray(v) ? v[2] : (v && v[2] !== undefined ? v[2] : '');
                 },
-                fontSize: 14,  // немного уменьшено для компактности
-                fontWeight: 'bold',
-                color: function(params) {
-                    // Используем labelColor из matrixData для корректного отображения нулей
-                    var it = matrixData[params.dataIndex];
-                    return it ? it.labelColor : '#000';
-                }
-            },
-            itemStyle: {
-                color: function(params) {
-                    var it = matrixData[params.dataIndex];
-                    return it ? it.color : '#cccccc';
-                }
+                fontSize: 14,
+                fontWeight: 'bold'
             },
             emphasis: { itemStyle: { borderColor: '#333', borderWidth: 2 } }
         }]
