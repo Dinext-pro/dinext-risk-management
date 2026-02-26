@@ -96,7 +96,7 @@ var DONUT_CHART_TYPES = [
     { value: 'responsible_person', label: __('По ответственным') }
 ];
 
-var EMPTY_LABEL = '—';
+var EMPTY_LABEL = __('Не определено');
 
 function applyAllRiskFilters(frm) {
     var fd = frm.fields_dict['custom_project_risks'];
