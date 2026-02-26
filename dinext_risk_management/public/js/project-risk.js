@@ -99,7 +99,7 @@ function filterRiskTable(frm, probability, impact) {
                 rows[j].wrapper.hide();
             }
         }
-        frappe.show_alert({ message: __('Отфильтровано по: Вероятность: {0} × Влияние: {1}', [probability, impact]), indicator: 'blue' });
+        frappe.show_alert({ message: __('Отфильтровано по: Вероятность: {0} × Влияние: {1}', [probability, impact]), indicator: 'blue' }, seconds = 3);
     }
 }
 
@@ -112,13 +112,62 @@ function clearRiskFilter(frm) {
     }
 }
 
+function darkenColor(hex, factor) {
+    if (!hex || typeof hex !== 'string') return hex;
+    factor = factor != null ? factor : 0.8;
+    var h = hex.replace(/^#/, '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    if (h.length !== 6) return hex;
+    var r = Math.round(parseInt(h.slice(0, 2), 16) * factor);
+    var g = Math.round(parseInt(h.slice(2, 4), 16) * factor);
+    var b = Math.round(parseInt(h.slice(4, 6), 16) * factor);
+    return '#' + [r, g, b].map(function(x) { return (x < 16 ? '0' : '') + x.toString(16); }).join('');
+}
+
+function buildHeatmapSeriesData(matrixData, selectedCell) {
+    var data = [];
+    for (var i = 0; i < matrixData.length; i++) {
+        var m = matrixData[i];
+        var contrast = getContrastColor(m.color);
+        var labelColor = m.count === 0
+            ? (contrast === '#fff' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)')
+            : contrast;
+        var isSelected = selectedCell && selectedCell.probability === m.probability && selectedCell.impact === m.impact;
+        var cellColor = isSelected ? darkenColor(m.color, 0.85) : m.color;
+        var itemStyle = { color: cellColor };
+        if (isSelected) {
+            itemStyle.borderColor = '#333';
+            itemStyle.borderWidth = 1;
+        }
+        data.push({
+            value: [m.impact, m.probability, m.count],
+            itemStyle: itemStyle,
+            label: { color: labelColor }
+        });
+    }
+    return data;
+}
+
+function applyMatrixSelectionHighlight(frm) {
+    var chart = frm._risk_matrix_chart;
+    var matrixData = frm._risk_matrix_data;
+    if (!chart || !matrixData) return;
+    var selectedCell = frm._risk_matrix_selected_cell || null;
+    var data = buildHeatmapSeriesData(matrixData, selectedCell);
+    chart.setOption({ series: [{ data: data }] });
+}
+
 function addClearFilterButton(frm) {
-    var field = frm.fields_dict['custom_risk_matrix'];
+    /*var field = frm.fields_dict['custom_risk_matrix'];
     if (!field || !field.$wrapper) return;
     if (field.$wrapper.find('.risk-matrix-clear-filter-btn').length) return;
     var btn = $('<button class="btn btn-sm btn-default risk-matrix-clear-filter-btn" style="margin-bottom:10px;">' + __('Сбросить фильтр') + '</button>');
-    btn.on('click', function() { clearRiskFilter(frm); });
-    field.$wrapper.prepend(btn);
+    btn.on('click', function() {
+        clearRiskFilter(frm);
+        frm._risk_matrix_selected_cell = null;
+        applyMatrixSelectionHighlight(frm);
+    });
+    field.$wrapper.prepend(btn);/* */
 }
 
 function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
@@ -133,19 +182,9 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
     var chartDiv = $('<div class="risk-matrix-chart-container" style="width:min(54vw, 864px); aspect-ratio: 2.7; max-width:960px;"></div>');
     field.$wrapper.append(chartDiv);
     var chart = echarts.init(chartDiv[0]);
-    var data = [];
-    for (var i = 0; i < matrixData.length; i++) {
-        var m = matrixData[i];
-        var contrast = getContrastColor(m.color);
-        var labelColor = m.count === 0
-            ? (contrast === '#fff' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)')
-            : contrast;
-        data.push({
-            value: [m.impact, m.probability, m.count],
-            itemStyle: { color: m.color },
-            label: { color: labelColor }
-        });
-    }
+    frm._risk_matrix_data = matrixData;
+    var selectedCell = frm._risk_matrix_selected_cell || null;
+    var data = buildHeatmapSeriesData(matrixData, selectedCell);
     var maxCount = 0;
     for (var j = 0; j < matrixData.length; j++) {
         if (matrixData[j].count > maxCount) maxCount = matrixData[j].count;
@@ -206,6 +245,7 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
         series: [{
             name: __('Риски'),
             type: 'heatmap',
+            animation: false,
             data: data,
             // Показываем только количество, нули затемнены
             label: { 
@@ -215,15 +255,24 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
                     return Array.isArray(v) ? v[2] : (v && v[2] !== undefined ? v[2] : '');
                 },
                 fontSize: 14,
-                fontWeight: 'bold'
+                //fontWeight: 'bold'
             },
-            emphasis: { itemStyle: { borderColor: '#333', borderWidth: 2 } }
+            emphasis: { itemStyle: { borderColor: '#333', borderWidth: 1 } }
         }]
     };
     chart.setOption(option);
     chart.on('click', function(params) {
         var it = matrixData[params.dataIndex];
-        if (it) filterRiskTable(frm, it.probability, it.impact);
+        if (!it) return;
+        var sel = frm._risk_matrix_selected_cell;
+        if (sel && sel.probability === it.probability && sel.impact === it.impact) {
+            clearRiskFilter(frm);
+            frm._risk_matrix_selected_cell = null;
+        } else {
+            filterRiskTable(frm, it.probability, it.impact);
+            frm._risk_matrix_selected_cell = { probability: it.probability, impact: it.impact };
+        }
+        applyMatrixSelectionHighlight(frm);
     });
     frm._risk_matrix_chart = chart;
     
