@@ -373,7 +373,7 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
 
     var donutPanel = $('<div class="risk-donut-panel"></div>');
     var formGroup = $('<div class="form-group"></div>');
-    var label = $('<label class="control-label">' + __('Вид графика') + '</label>');
+    //var label = $('<label class="control-label">' + __('Вид графика') + '</label>');
     var select = $('<select class="form-control input-sm"></select>');
     select.attr('aria-label', __('Вид графика'));
     for (var di = 0; di < DONUT_CHART_TYPES.length; di++) {
@@ -383,7 +383,7 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
     frm._donut_chart_type_select = select;
     if (!frm._donut_chart_type) frm._donut_chart_type = 'category';
     select.val(frm._donut_chart_type);
-    formGroup.append(label).append(select);
+    formGroup.append(select);
     donutPanel.append(formGroup);
     var donutContainer = $('<div class="risk-donut-chart-container"></div>');
     donutPanel.append(donutContainer);
