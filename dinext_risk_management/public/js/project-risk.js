@@ -1,6 +1,8 @@
 // Project Risk Matrix - Interactive heatmap with ECharts
 // ECharts: loaded from CDN on first use
 
+var _lastRiskMatrixForm = null;
+
 function loadEcharts() {
     if (window.echarts) return Promise.resolve();
     return new Promise(function(resolve, reject) {
@@ -23,10 +25,19 @@ async function loadRiskDimensions() {
     return { impacts: lists[0] || [], probabilities: lists[1] || [], levels: lists[2] || [] };
 }
 
+function isDarkTheme() {
+    var theme = document.documentElement.getAttribute('data-theme');
+    if (theme === 'dark' || theme === 'light') return theme === 'dark';
+    var mode = document.documentElement.getAttribute('data-theme-mode');
+    if (mode === 'dark') return true;
+    if (mode === 'light') return false;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
 function getColor(level) {
     if (!level) return '#cccccc';
-    var isDark = document.body.classList.contains('dark') || (document.documentElement.getAttribute('data-theme-mode') === 'dark');
-    var c = isDark ? (level.color_dark_theme || level.color_light_theme) : (level.color_light_theme || level.color_dark_theme);
+    var dark = isDarkTheme();
+    var c = dark ? (level.color_dark_theme || level.color_light_theme) : (level.color_light_theme || level.color_dark_theme);
     return c || '#cccccc';
 }
 
@@ -118,8 +129,7 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
         frm._risk_matrix_chart = null;
     }
     field.$wrapper.find('.risk-matrix-chart-container').remove();
-    var isDark = document.body.classList.contains('dark') || (document.documentElement.getAttribute('data-theme-mode') === 'dark');
-    var axisTextColor = isDark ? '#e0e0e0' : '#374151';
+    var axisTextColor = isDarkTheme() ? '#e0e0e0' : '#374151';
     var chartDiv = $('<div class="risk-matrix-chart-container" style="width:min(54vw, 864px); aspect-ratio: 2.7; max-width:960px;"></div>');
     field.$wrapper.append(chartDiv);
     var chart = echarts.init(chartDiv[0]);
@@ -128,7 +138,7 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
         var m = matrixData[i];
         var contrast = getContrastColor(m.color);
         var labelColor = m.count === 0
-            ? (contrast === '#fff' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.35)')
+            ? (contrast === '#fff' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)')
             : contrast;
         data.push({
             value: [m.impact, m.probability, m.count],
@@ -231,6 +241,17 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
     window.addEventListener('resize', resizeHandler);
 }
 
+function ensureThemeObserver() {
+    if (window._risk_theme_observer_bound) return;
+    window._risk_theme_observer_bound = true;
+    var observer = new MutationObserver(function() {
+        if (_lastRiskMatrixForm && _lastRiskMatrixForm._risk_matrix_chart) {
+            renderRiskMatrixWrapper(_lastRiskMatrixForm);
+        }
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+}
+
 async function renderRiskMatrixWrapper(frm) {
     var field = frm.fields_dict['custom_risk_matrix'];
     if (!field || !field.$wrapper || !field.$wrapper.length) return;
@@ -245,6 +266,8 @@ async function renderRiskMatrixWrapper(frm) {
         var matrixData = buildMatrixData(frm, dims.impacts, dims.probabilities, dims.levels);
         renderRiskMatrix(frm, matrixData, dims.impacts, dims.probabilities);
         addClearFilterButton(frm);
+        _lastRiskMatrixForm = frm;
+        ensureThemeObserver();
     } catch (e) {
         console.error('Project Risk Matrix error:', e);
         field.$wrapper.find('.risk-matrix-chart-container').remove();
