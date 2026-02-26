@@ -1,51 +1,51 @@
 [
  {
-  "color_dark_theme": "#f20707",
-  "color_light_theme": "#CB2929",
+  "color_dark_theme": "#5e1d1d",
+  "color_light_theme": "#e33d3d",
   "docstatus": 0,
   "doctype": "Risk Level",
   "enabled": 1,
-  "modified": "2026-01-25 15:39:01.247465",
+  "modified": "2026-02-27 01:06:32.993894",
   "name": "Критический",
   "value": 20
  },
  {
-  "color_dark_theme": "#EC864B",
-  "color_light_theme": "#EC864B",
+  "color_dark_theme": "#572626",
+  "color_light_theme": "#eb5454",
   "docstatus": 0,
   "doctype": "Risk Level",
   "enabled": 1,
-  "modified": "2026-01-25 15:39:01.734011",
+  "modified": "2026-02-27 01:06:43.641716",
   "name": "Высокий",
   "value": 15
  },
  {
-  "color_dark_theme": "#ECAD4B",
-  "color_light_theme": "#ECAD4B",
+  "color_dark_theme": "#523521",
+  "color_light_theme": "#e38649",
   "docstatus": 0,
   "doctype": "Risk Level",
   "enabled": 1,
-  "modified": "2026-01-25 15:39:02.283749",
+  "modified": "2026-02-27 01:06:49.372825",
   "name": "Значительный",
   "value": 10
  },
  {
-  "color_dark_theme": "#29CD42",
-  "color_light_theme": "#29CD42",
+  "color_dark_theme": "#4f3e20",
+  "color_light_theme": "#e3ac4d",
   "docstatus": 0,
   "doctype": "Risk Level",
   "enabled": 1,
-  "modified": "2026-01-25 15:39:02.823672",
+  "modified": "2026-02-27 01:06:54.340261",
   "name": "Умеренный",
   "value": 5
  },
  {
-  "color_dark_theme": "#29CD42",
-  "color_light_theme": "#29CD42",
+  "color_dark_theme": "#233d24",
+  "color_light_theme": "#64d168",
   "docstatus": 0,
   "doctype": "Risk Level",
   "enabled": 1,
-  "modified": "2026-01-25 15:39:24.969038",
+  "modified": "2026-02-27 01:06:59.594428",
   "name": "Низкий",
   "value": 0
  }
