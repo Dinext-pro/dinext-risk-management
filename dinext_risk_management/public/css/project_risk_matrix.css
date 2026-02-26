@@ -1,3 +1,15 @@
+/* Risk matrix row: matrix (left) + donut panel (right); column only below 980px */
+.risk-matrix-row {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+}
+
+.risk-matrix-row .risk-matrix-chart-container {
+    flex-shrink: 0;
+}
+
 /* Risk matrix chart container */
 .risk-matrix-chart-container {
     width: min(54vw, 864px);
@@ -5,9 +17,37 @@
     aspect-ratio: 2.7;
 }
 
-@media (max-width: 979px) {
+/* Right panel: dropdown + donut */
+.risk-donut-panel {
+    min-width: 280px;
+    flex: 1;
+    max-width: 420px;
+}
+
+.risk-donut-panel .form-group {
+    margin-bottom: 8px;
+}
+
+.risk-donut-chart-container {
+    width: 100%;
+    min-height: 140px;
+    aspect-ratio: 1;
+    max-height: 160px;
+}
+
+@media (max-width: 980px) {
+    /* Перенос выпадающего меню и графика на новую строку только на экранах < 980px */
+    .risk-matrix-row {
+        flex-wrap: wrap;
+        flex-direction: column;
+    }
+
     .risk-matrix-chart-container {
         width: 100%;
+        max-width: 100%;
+    }
+
+    .risk-donut-panel {
         max-width: 100%;
     }
 }
