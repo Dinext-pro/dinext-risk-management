@@ -85,31 +85,51 @@ function buildMatrixData(frm, impacts, probabilities, levels) {
     return matrix;
 }
 
-function filterRiskTable(frm, probability, impact) {
+var DONUT_CHART_TYPES = [
+    { value: 'category', label: __('По категориям') },
+    { value: 'priority', label: __('По приоритетам') },
+    { value: 'impact', label: __('По влиянию') },
+    { value: 'probability', label: __('По вероятности') },
+    { value: 'level', label: __('По уровням') },
+    { value: 'strategy', label: __('По стратегии') },
+    { value: 'owner_person', label: __('По владельцам') },
+    { value: 'responsible_person', label: __('По ответственным') }
+];
+
+var EMPTY_LABEL = '—';
+
+function applyAllRiskFilters(frm) {
     var fd = frm.fields_dict['custom_project_risks'];
     if (!fd || !fd.grid || !fd.grid.grid_rows) return;
     var rows = fd.grid.grid_rows;
+    var matrixCell = frm._risk_matrix_selected_cell || null;
+    var donutSel = frm._donut_selected || null;
     for (var i = 0; i < rows.length; i++) {
-        rows[i].wrapper.show();
-    }
-    if (probability && impact) {
-        for (var j = 0; j < rows.length; j++) {
-            var d = rows[j].doc;
-            if (d.probability !== probability || d.impact !== impact) {
-                rows[j].wrapper.hide();
-            }
-        }
-        frappe.show_alert({ message: __('Отфильтровано по: Вероятность: {0} × Влияние: {1}', [probability, impact]), indicator: 'blue' }, seconds = 3);
+        var d = rows[i].doc;
+        var passMatrix = !matrixCell || (d.probability === matrixCell.probability && d.impact === matrixCell.impact);
+        var passDonut = !donutSel || (String(d[donutSel.fieldname] || '') === String(donutSel.value || ''));
+        rows[i].wrapper[passMatrix && passDonut ? 'show' : 'hide']();
     }
 }
 
 function clearRiskFilter(frm) {
-    var fd = frm.fields_dict['custom_project_risks'];
-    if (!fd || !fd.grid || !fd.grid.grid_rows) return;
-    var rows = fd.grid.grid_rows;
-    for (var i = 0; i < rows.length; i++) {
-        rows[i].wrapper.show();
+    frm._risk_matrix_selected_cell = null;
+    applyAllRiskFilters(frm);
+}
+
+function getDonutData(frm, fieldname) {
+    var risks = frm.doc.custom_project_risks || [];
+    var counts = {};
+    for (var i = 0; i < risks.length; i++) {
+        var v = risks[i][fieldname];
+        var key = (v === undefined || v === null || v === '') ? EMPTY_LABEL : String(v);
+        counts[key] = (counts[key] || 0) + 1;
     }
+    var data = [];
+    for (var k in counts) {
+        data.push({ value: counts[k], name: k });
+    }
+    return data.sort(function(a, b) { return b.value - a.value; });
 }
 
 function darkenColor(hex, factor) {
@@ -170,6 +190,74 @@ function addClearFilterButton(frm) {
     field.$wrapper.prepend(btn);/* */
 }
 
+function buildDonutOption(frm, data, selectedValue) {
+    var textColor = isDarkTheme() ? '#e0e0e0' : '#374151';
+    var seriesData = (data || []).map(function(item, idx) {
+        var isSelected = selectedValue !== null && selectedValue !== undefined && String(item.name) === String(selectedValue);
+        return {
+            value: item.value,
+            name: item.name,
+            selected: isSelected,
+            itemStyle: isSelected ? { borderColor: '#333', borderWidth: 2 } : undefined
+        };
+    });
+    return {
+        tooltip: {
+            trigger: 'item',
+            formatter: function(params) {
+                var p = params;
+                return (p.name || '') + ': ' + (p.value || 0) + ' (' + (p.percent || 0).toFixed(1) + '%)';
+            }
+        },
+        series: [{
+            type: 'pie',
+            radius: '70%',
+            center: ['50%', '50%'],
+            data: seriesData,
+            label: {
+                color: textColor,
+                formatter: function(params) {
+                    var n = params.name;
+                    if (n && n.length > 18) n = n.slice(0, 16) + '…';
+                    return (n || '') + '\n' + (params.value || 0);
+                }
+            },
+            emphasis: { itemStyle: { borderColor: '#333', borderWidth: 2 } },
+            selectedOffset: 8
+        }]
+    };
+}
+
+function getDonutChartType(frm) {
+    var sel = frm._donut_chart_type_select;
+    return (sel && sel.length && sel.val()) ? sel.val() : 'category';
+}
+
+function updateDonutChart(frm) {
+    var chart = frm._risk_donut_chart;
+    var container = frm._risk_donut_container;
+    if (!chart || !container || !container.length) return;
+    var fieldname = getDonutChartType(frm);
+    var data = getDonutData(frm, fieldname);
+    var selectedValue = (frm._donut_selected && frm._donut_selected.fieldname === fieldname) ? frm._donut_selected.value : null;
+    var option = buildDonutOption(frm, data, selectedValue);
+    chart.setOption(option, { replaceMerge: ['series'] });
+}
+
+function onDonutClick(frm, params) {
+    if (!params || !params.name) return;
+    var fieldname = getDonutChartType(frm);
+    var value = params.name === EMPTY_LABEL ? '' : params.name;
+    var sel = frm._donut_selected;
+    if (sel && sel.fieldname === fieldname && String(sel.value || '') === String(value || '')) {
+        frm._donut_selected = null;
+    } else {
+        frm._donut_selected = { fieldname: fieldname, value: value };
+    }
+    applyAllRiskFilters(frm);
+    updateDonutChart(frm);
+}
+
 function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
     var field = frm.fields_dict['custom_risk_matrix'];
     if (!field || !field.$wrapper) return;
@@ -177,10 +265,17 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
         try { frm._risk_matrix_chart.dispose(); } catch (e) {}
         frm._risk_matrix_chart = null;
     }
-    field.$wrapper.find('.risk-matrix-chart-container').remove();
-    var axisTextColor = isDarkTheme() ? '#e0e0e0' : '#374151';
+    if (frm._risk_donut_chart) {
+        try { frm._risk_donut_chart.dispose(); } catch (e) {}
+        frm._risk_donut_chart = null;
+    }
+    field.$wrapper.find('.risk-matrix-row').remove();
+    var row = $('<div class="risk-matrix-row"></div>');
+    var leftCol = $('<div></div>');
     var chartDiv = $('<div class="risk-matrix-chart-container"></div>');
-    field.$wrapper.append(chartDiv);
+    leftCol.append(chartDiv);
+    row.append(leftCol);
+    var axisTextColor = isDarkTheme() ? '#e0e0e0' : '#374151';
     var chart = echarts.init(chartDiv[0]);
     frm._risk_matrix_data = matrixData;
     var selectedCell = frm._risk_matrix_selected_cell || null;
@@ -266,23 +361,53 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
         if (!it) return;
         var sel = frm._risk_matrix_selected_cell;
         if (sel && sel.probability === it.probability && sel.impact === it.impact) {
-            clearRiskFilter(frm);
             frm._risk_matrix_selected_cell = null;
         } else {
-            filterRiskTable(frm, it.probability, it.impact);
             frm._risk_matrix_selected_cell = { probability: it.probability, impact: it.impact };
+            frappe.show_alert({ message: __('Отфильтровано по: Вероятность: {0} × Влияние: {1}', [it.probability, it.impact]), indicator: 'blue' }, 3);
         }
+        applyAllRiskFilters(frm);
         applyMatrixSelectionHighlight(frm);
     });
     frm._risk_matrix_chart = chart;
-    
-    // Responsive resize handler
+
+    var donutPanel = $('<div class="risk-donut-panel"></div>');
+    var formGroup = $('<div class="form-group"></div>');
+    var label = $('<label class="control-label">' + __('Вид графика') + '</label>');
+    var select = $('<select class="form-control input-sm"></select>');
+    select.attr('aria-label', __('Вид графика'));
+    for (var di = 0; di < DONUT_CHART_TYPES.length; di++) {
+        var opt = DONUT_CHART_TYPES[di];
+        select.append($('<option></option>').attr('value', opt.value).text(opt.label));
+    }
+    frm._donut_chart_type_select = select;
+    if (!frm._donut_chart_type) frm._donut_chart_type = 'category';
+    select.val(frm._donut_chart_type);
+    formGroup.append(label).append(select);
+    donutPanel.append(formGroup);
+    var donutContainer = $('<div class="risk-donut-chart-container"></div>');
+    donutPanel.append(donutContainer);
+    row.append(donutPanel);
+    field.$wrapper.append(row);
+
+    frm._risk_donut_container = donutContainer;
+    var donutChart = echarts.init(donutContainer[0]);
+    frm._risk_donut_chart = donutChart;
+    updateDonutChart(frm);
+    donutChart.on('click', function(params) {
+        onDonutClick(frm, params);
+    });
+    select.on('change', function() {
+        frm._donut_chart_type = select.val();
+        frm._donut_selected = null;
+        updateDonutChart(frm);
+        applyAllRiskFilters(frm);
+    });
+
     var resizeHandler = function() {
-        if (frm._risk_matrix_chart) {
-            frm._risk_matrix_chart.resize();
-        }
+        if (frm._risk_matrix_chart) frm._risk_matrix_chart.resize();
+        if (frm._risk_donut_chart) frm._risk_donut_chart.resize();
     };
-    // Удаляем предыдущий обработчик, если есть
     if (frm._risk_matrix_resize_handler) {
         window.removeEventListener('resize', frm._risk_matrix_resize_handler);
     }
@@ -308,7 +433,7 @@ async function renderRiskMatrixWrapper(frm) {
         await loadEcharts();
         var dims = await loadRiskDimensions();
         if (!dims.impacts.length || !dims.probabilities.length) {
-            field.$wrapper.find('.risk-matrix-chart-container').remove();
+            field.$wrapper.find('.risk-matrix-row').remove();
             field.$wrapper.append('<p class="text-muted">' + __('Нет настроенных уровней влияния или вероятности') + '</p>');
             return;
         }
@@ -319,7 +444,7 @@ async function renderRiskMatrixWrapper(frm) {
         ensureThemeObserver();
     } catch (e) {
         console.error('Project Risk Matrix error:', e);
-        field.$wrapper.find('.risk-matrix-chart-container').remove();
+        field.$wrapper.find('.risk-matrix-row').remove();
         field.$wrapper.append('<p class="text-danger">' + __('Ошибка загрузки матрицы рисков') + ': ' + (e.message || e) + '</p>');
     }
 }
@@ -332,6 +457,7 @@ function bindRiskTabListenerOnce(frm) {
         if (frm._risk_matrix_chart) {
             setTimeout(function() {
                 if (frm._risk_matrix_chart) frm._risk_matrix_chart.resize();
+                if (frm._risk_donut_chart) frm._risk_donut_chart.resize();
             }, 50);
         } else {
             renderRiskMatrixWrapper(frm);
