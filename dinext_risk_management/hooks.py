@@ -61,7 +61,7 @@ fixtures = [
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/dinext_risk_management/css/dinext_risk_management.css"
+app_include_css = "/assets/dinext_risk_management/css/project_risk_matrix.css"
 # app_include_js = "/assets/dinext_risk_management/js/dinext_risk_management.js"
 
 # include js, css files in header of web template
