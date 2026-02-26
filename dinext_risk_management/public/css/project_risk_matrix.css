@@ -1,0 +1,13 @@
+/* Risk matrix chart container */
+.risk-matrix-chart-container {
+    width: min(54vw, 864px);
+    max-width: 960px;
+    aspect-ratio: 2.7;
+}
+
+@media (max-width: 979px) {
+    .risk-matrix-chart-container {
+        width: 100%;
+        max-width: 100%;
+    }
+}

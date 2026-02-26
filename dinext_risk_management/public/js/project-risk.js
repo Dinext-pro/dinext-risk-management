@@ -179,7 +179,7 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
     }
     field.$wrapper.find('.risk-matrix-chart-container').remove();
     var axisTextColor = isDarkTheme() ? '#e0e0e0' : '#374151';
-    var chartDiv = $('<div class="risk-matrix-chart-container" style="width:min(54vw, 864px); aspect-ratio: 2.7; max-width:960px;"></div>');
+    var chartDiv = $('<div class="risk-matrix-chart-container"></div>');
     field.$wrapper.append(chartDiv);
     var chart = echarts.init(chartDiv[0]);
     frm._risk_matrix_data = matrixData;
