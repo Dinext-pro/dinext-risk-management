@@ -133,7 +133,7 @@ function buildHeatmapSeriesData(matrixData, selectedCell) {
             ? (contrast === '#fff' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)')
             : contrast;
         var isSelected = selectedCell && selectedCell.probability === m.probability && selectedCell.impact === m.impact;
-        var cellColor = isSelected ? darkenColor(m.color, 0.85) : m.color;
+        var cellColor = isSelected ? darkenColor(m.color, ( isDarkTheme() ? 1.35 : 0.85 ) ) : m.color;
         var itemStyle = { color: cellColor };
         if (isSelected) {
             itemStyle.borderColor = '#333';
@@ -324,25 +324,6 @@ async function renderRiskMatrixWrapper(frm) {
     }
 }
 
-function scheduleRiskMatrixRender(frm) {
-    if (!frm.doc.name || frm.is_new()) return;
-    var field = frm.fields_dict['custom_risk_matrix'];
-    if (!field || !field.$wrapper || !field.$wrapper.length) return;
-    var $container = field.$wrapper.find('.risk-matrix-chart-container');
-    var containerVisible = $container.length && $container.is(':visible') && $container.width() > 0 && $container.height() > 0;
-    if (containerVisible && frm._risk_matrix_chart) {
-        frm._risk_matrix_chart.resize();
-        return;
-    }
-    renderRiskMatrixWrapper(frm).then(function() {
-        if (frm._risk_matrix_chart && !containerVisible) {
-            setTimeout(function() {
-                if (frm._risk_matrix_chart) frm._risk_matrix_chart.resize();
-            }, 100);
-        }
-    });
-}
-
 function bindRiskTabListenerOnce(frm) {
     if (frm._risk_tab_listener_bound) return;
     var $wrapper = frm.$wrapper || (frm.wrapper && $(frm.wrapper));
@@ -353,7 +334,7 @@ function bindRiskTabListenerOnce(frm) {
                 if (frm._risk_matrix_chart) frm._risk_matrix_chart.resize();
             }, 50);
         } else {
-            scheduleRiskMatrixRender(frm);
+            renderRiskMatrixWrapper(frm);
         }
     });
     frm._risk_tab_listener_bound = true;
@@ -362,7 +343,7 @@ function bindRiskTabListenerOnce(frm) {
 frappe.ui.form.on('Project', {
     refresh: function(frm) {
         if (frm.doc.name && !frm.is_new()) {
-            scheduleRiskMatrixRender(frm);
+            renderRiskMatrixWrapper(frm);
             bindRiskTabListenerOnce(frm);
         }
     }
