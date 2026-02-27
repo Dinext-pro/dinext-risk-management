@@ -22,6 +22,7 @@
     flex: 1;
     max-width: 420px;
     padding-top: 28px;
+    padding-bottom: 10px;
     display: flex;
     flex-direction: column;
 }
