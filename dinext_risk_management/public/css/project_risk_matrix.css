@@ -9,10 +9,10 @@
     flex-shrink: 0;
 }
 
-/* Risk matrix chart container */
+/* Risk matrix chart container — ~12% narrower to leave more space for donut */
 .risk-matrix-chart-container {
-    width: min(54vw, 864px);
-    max-width: 960px;
+    width: min(45vw, 760px);
+    max-width: 820px;
     aspect-ratio: 2.7;
 }
 
