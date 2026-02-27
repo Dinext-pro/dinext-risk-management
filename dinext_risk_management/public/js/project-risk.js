@@ -85,6 +85,38 @@ function buildMatrixData(frm, impacts, probabilities, levels) {
     return matrix;
 }
 
+function buildMatrixDataFromRisks(risks, impacts, probabilities, levels) {
+    var matrix = [];
+    risks = risks || [];
+    for (var pi = 0; pi < probabilities.length; pi++) {
+        var p = probabilities[pi];
+        for (var ii = 0; ii < impacts.length; ii++) {
+            var i = impacts[ii];
+            var score = (p.value || 0) * (i.value || 0);
+            var level = null;
+            for (var li = 0; li < levels.length; li++) {
+                if (Number(levels[li].value) <= score) { level = levels[li]; break; }
+            }
+            if (!level && levels.length) level = levels[levels.length - 1];
+            var count = 0;
+            for (var ri = 0; ri < risks.length; ri++) {
+                if (risks[ri].probability === p.name && risks[ri].impact === i.name) count++;
+            }
+            matrix.push({
+                probability: p.name,
+                probability_value: Number(p.value) || 0,
+                impact: i.name,
+                impact_value: Number(i.value) || 0,
+                score: score,
+                level: level ? level.name : '',
+                color: getColor(level),
+                count: count
+            });
+        }
+    }
+    return matrix;
+}
+
 var DONUT_CHART_TYPES = [
     { value: 'category', label: __('По категориям') },
     { value: 'status', label: __('По статусам') },
@@ -125,13 +157,29 @@ function applyAllRiskFilters(frm) {
     }
 }
 
+/** Return subset of custom_project_risks filtered by matrix and/or donut selection. */
+function getFilteredRisks(frm, byMatrix, byDonut) {
+    var risks = frm.doc.custom_project_risks || [];
+    if (!byMatrix && !byDonut) return risks;
+    var out = [];
+    var matrixCell = byMatrix ? (frm._risk_matrix_selected_cell || null) : null;
+    var donutSel = byDonut ? (frm._donut_selected || null) : null;
+    for (var i = 0; i < risks.length; i++) {
+        var d = risks[i];
+        var passMatrix = !matrixCell || (d.probability === matrixCell.probability && d.impact === matrixCell.impact);
+        var passDonut = !donutSel || (String(d[donutSel.fieldname] || '') === String(donutSel.value || ''));
+        if (passMatrix && passDonut) out.push(d);
+    }
+    return out;
+}
+
 function clearRiskFilter(frm) {
     frm._risk_matrix_selected_cell = null;
     applyAllRiskFilters(frm);
 }
 
-function getDonutData(frm, fieldname) {
-    var risks = frm.doc.custom_project_risks || [];
+function getDonutData(frm, fieldname, risks) {
+    if (risks === undefined) risks = frm.doc.custom_project_risks || [];
     var counts = {};
     for (var i = 0; i < risks.length; i++) {
         var v = risks[i][fieldname];
@@ -190,6 +238,26 @@ function applyMatrixSelectionHighlight(frm) {
     chart.setOption({ series: [{ data: data }] });
 }
 
+function updateMatrixChartFromDonutFilter(frm) {
+    var chart = frm._risk_matrix_chart;
+    var dims = frm._risk_matrix_dims;
+    if (!chart || !dims) return;
+    var risks = frm._donut_selected
+        ? getFilteredRisks(frm, false, true)
+        : (frm.doc.custom_project_risks || []);
+    var matrixData = buildMatrixDataFromRisks(risks, dims.impacts, dims.probabilities, dims.levels);
+    frm._risk_matrix_data = matrixData;
+    var selectedCell = frm._risk_matrix_selected_cell || null;
+    var data = buildHeatmapSeriesData(matrixData, selectedCell);
+    chart.setOption({
+        series: [{
+            data: data,
+            animation: true,
+            animationDuration: 350
+        }]
+    });
+}
+
 function buildDonutOption(frm, data, selectedValue) {
     var textColor = isDarkTheme() ? '#e0e0e0' : '#374151';
     var seriesData = (data || []).map(function(item, idx) {
@@ -220,6 +288,8 @@ function buildDonutOption(frm, data, selectedValue) {
             radius: ['45%', '65%'],
             center: ['50%', '50%'],
             data: seriesData,
+            animation: true,
+            animationDuration: 350,
             avoidLabelOverlap: true,
             labelLine: {
                 show: true,
@@ -250,7 +320,10 @@ function updateDonutChart(frm) {
     var container = frm._risk_donut_container;
     if (!chart || !container || !container.length) return;
     var fieldname = getDonutChartType(frm);
-    var data = getDonutData(frm, fieldname);
+    var risks = frm._risk_matrix_selected_cell
+        ? getFilteredRisks(frm, true, false)
+        : undefined;
+    var data = getDonutData(frm, fieldname, risks);
     var selectedValue = (frm._donut_selected && frm._donut_selected.fieldname === fieldname) ? frm._donut_selected.value : null;
     var option = buildDonutOption(frm, data, selectedValue);
     chart.setOption(option, { replaceMerge: ['series'] });
@@ -261,7 +334,10 @@ function updateDonutSelectionOnly(frm) {
     var container = frm._risk_donut_container;
     if (!chart || !container || !container.length) return;
     var fieldname = getDonutChartType(frm);
-    var data = getDonutData(frm, fieldname);
+    var risks = frm._risk_matrix_selected_cell
+        ? getFilteredRisks(frm, true, false)
+        : undefined;
+    var data = getDonutData(frm, fieldname, risks);
     var selectedValue = (frm._donut_selected && frm._donut_selected.fieldname === fieldname) ? frm._donut_selected.value : null;
     var seriesData = (data || []).map(function(item) {
         var isSelected = selectedValue !== null && selectedValue !== undefined && String(item.name) === String(selectedValue);
@@ -295,6 +371,7 @@ function onDonutClick(frm, params) {
     }
     applyAllRiskFilters(frm);
     updateDonutSelectionOnly(frm);
+    updateMatrixChartFromDonutFilter(frm);
 }
 
 function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
@@ -331,7 +408,9 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
         tooltip: {
             formatter: function(params) {
                 var idx = params.dataIndex;
-                var it = matrixData[idx];
+                var data = frm._risk_matrix_data;
+                var it = data && data[idx];
+                if (!it) return '';
                 return '<strong>' + (it.probability || '') + ' × ' + (it.impact || '') + '</strong><br/>' +
                     (__('Уровень') + ': ' + (it.level || '-') + '<br/>') +
                     (__('Количество рисков') + ': ' + (it.count || 0));
@@ -400,7 +479,8 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
     };
     chart.setOption(option);
     chart.on('click', function(params) {
-        var it = matrixData[params.dataIndex];
+        var data = frm._risk_matrix_data;
+        var it = data && data[params.dataIndex];
         if (!it) return;
         var sel = frm._risk_matrix_selected_cell;
         if (sel && sel.probability === it.probability && sel.impact === it.impact) {
@@ -411,6 +491,7 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
         }
         applyAllRiskFilters(frm);
         applyMatrixSelectionHighlight(frm);
+        updateDonutChart(frm);
     });
     frm._risk_matrix_chart = chart;
 
@@ -432,6 +513,7 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
                 frm._donut_selected = null;
                 updateDonutChart(frm);
                 applyAllRiskFilters(frm);
+                updateMatrixChartFromDonutFilter(frm);
             }
         },
         value: frm._donut_chart_type || 'category',
@@ -496,6 +578,7 @@ async function renderRiskMatrixWrapper(frm) {
             field.$wrapper.append('<p class="text-muted">' + __('Нет настроенных уровней влияния или вероятности') + '</p>');
             return;
         }
+        frm._risk_matrix_dims = dims;
         var matrixData = buildMatrixData(frm, dims.impacts, dims.probabilities, dims.levels);
         renderRiskMatrix(frm, matrixData, dims.impacts, dims.probabilities);
         _lastRiskMatrixForm = frm;
