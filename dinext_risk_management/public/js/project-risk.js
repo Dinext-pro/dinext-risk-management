@@ -434,6 +434,9 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
     }
     frm._risk_matrix_resize_handler = resizeHandler;
     window.addEventListener('resize', resizeHandler);
+    setTimeout(function() {
+        if (frm._risk_donut_chart) frm._risk_donut_chart.resize();
+    }, 50);
 }
 
 function ensureThemeObserver() {
