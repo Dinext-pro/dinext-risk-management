@@ -338,7 +338,7 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
             }
         },
         grid: {
-            left: '68px',
+            left: '28px',
             right: '58px',
             top: '28px',
             bottom: '50px',
@@ -360,7 +360,7 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
                 data: probabilities.map(function(x) { return x.name; }),
                 name: __('Вероятность'),
                 nameLocation: 'middle',
-                nameGap: 35,
+                nameGap: 10,
                 nameTextStyle: { fontSize: 12, color: axisTextColor },
                 axisLabel: { show: false },
                 splitArea: { show: true }
