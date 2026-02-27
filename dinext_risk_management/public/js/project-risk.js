@@ -87,6 +87,7 @@ function buildMatrixData(frm, impacts, probabilities, levels) {
 
 var DONUT_CHART_TYPES = [
     { value: 'category', label: __('По категориям') },
+    { value: 'status', label: __('По статусам') },
     { value: 'priority', label: __('По приоритетам') },
     { value: 'impact', label: __('По влиянию') },
     { value: 'probability', label: __('По вероятности') },
@@ -222,8 +223,8 @@ function buildDonutOption(frm, data, selectedValue) {
                     return (n || '') + '\n' + (params.value || 0);
                 }
             },
-            emphasis: { itemStyle: { borderColor: '#333', borderWidth: 2 } },
-            selectedOffset: 8
+            emphasis: { scale: true, scaleSize: 10, itemStyle: { borderColor: '#333', borderWidth: 2 } },
+            selectedOffset: 12
         }]
     };
 }
@@ -244,6 +245,33 @@ function updateDonutChart(frm) {
     chart.setOption(option, { replaceMerge: ['series'] });
 }
 
+function updateDonutSelectionOnly(frm) {
+    var chart = frm._risk_donut_chart;
+    var container = frm._risk_donut_container;
+    if (!chart || !container || !container.length) return;
+    var fieldname = getDonutChartType(frm);
+    var data = getDonutData(frm, fieldname);
+    var selectedValue = (frm._donut_selected && frm._donut_selected.fieldname === fieldname) ? frm._donut_selected.value : null;
+    var seriesData = (data || []).map(function(item) {
+        var isSelected = selectedValue !== null && selectedValue !== undefined && String(item.name) === String(selectedValue);
+        return {
+            value: item.value,
+            name: item.name,
+            selected: isSelected,
+            itemStyle: isSelected ? { borderColor: '#333', borderWidth: 2 } : undefined
+        };
+    });
+    chart.setOption({ series: [{ data: seriesData }] });
+    chart.dispatchAction({ type: 'downplay', seriesIndex: 0 });
+    var selectedIndex = -1;
+    for (var i = 0; i < seriesData.length; i++) {
+        if (seriesData[i].selected) { selectedIndex = i; break; }
+    }
+    if (selectedIndex >= 0) {
+        chart.dispatchAction({ type: 'highlight', seriesIndex: 0, dataIndex: selectedIndex });
+    }
+}
+
 function onDonutClick(frm, params) {
     if (!params || !params.name) return;
     var fieldname = getDonutChartType(frm);
@@ -255,7 +283,7 @@ function onDonutClick(frm, params) {
         frm._donut_selected = { fieldname: fieldname, value: value };
     }
     applyAllRiskFilters(frm);
-    updateDonutChart(frm);
+    updateDonutSelectionOnly(frm);
 }
 
 function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
