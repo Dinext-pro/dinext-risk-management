@@ -230,8 +230,8 @@ function buildDonutOption(frm, data, selectedValue) {
 }
 
 function getDonutChartType(frm) {
-    var sel = frm._donut_chart_type_select;
-    return (sel && sel.length && sel.val()) ? sel.val() : 'category';
+    var ctrl = frm._donut_chart_type_control;
+    return (ctrl && ctrl.get_value) ? ctrl.get_value() : (frm._donut_chart_type || 'category');
 }
 
 function updateDonutChart(frm) {
@@ -401,17 +401,29 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
 
     var donutPanel = $('<div class="risk-donut-panel"></div>');
     var formGroup = $('<div class="form-group"></div>');
-    //var label = $('<label class="control-label">' + __('Вид графика') + '</label>');
-    var select = $('<select class="form-control input-sm"></select>');
-    select.attr('aria-label', __('Вид графика'));
-    for (var di = 0; di < DONUT_CHART_TYPES.length; di++) {
-        var opt = DONUT_CHART_TYPES[di];
-        select.append($('<option></option>').attr('value', opt.value).text(opt.label));
-    }
-    frm._donut_chart_type_select = select;
     if (!frm._donut_chart_type) frm._donut_chart_type = 'category';
-    select.val(frm._donut_chart_type);
-    formGroup.append(select);
+    var donutChartTypeControl = frappe.ui.form.make_control({
+        parent: formGroup,
+        doctype: 'Project',
+        docname: frm.doc.name,
+        df: {
+            label: '',
+            fieldname: '_donut_chart_type',
+            fieldtype: 'Select',
+            options: DONUT_CHART_TYPES,
+            input_class: 'input-sm',
+            change: function() {
+                frm._donut_chart_type = this.get_value();
+                frm._donut_selected = null;
+                updateDonutChart(frm);
+                applyAllRiskFilters(frm);
+            }
+        },
+        value: frm._donut_chart_type || 'category',
+        render_input: true,
+        only_input: true
+    });
+    frm._donut_chart_type_control = donutChartTypeControl;
     donutPanel.append(formGroup);
     var donutContainer = $('<div class="risk-donut-chart-container"></div>');
     donutPanel.append(donutContainer);
@@ -424,12 +436,6 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
     updateDonutChart(frm);
     donutChart.on('click', function(params) {
         onDonutClick(frm, params);
-    });
-    select.on('change', function() {
-        frm._donut_chart_type = select.val();
-        frm._donut_selected = null;
-        updateDonutChart(frm);
-        applyAllRiskFilters(frm);
     });
 
     var resizeHandler = function() {
