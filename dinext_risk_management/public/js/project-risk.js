@@ -97,6 +97,18 @@ var DONUT_CHART_TYPES = [
     { value: 'responsible_person', label: __('По ответственным') }
 ];
 
+/** Muted but clearly colored palette for pie/donut — light theme */
+var DONUT_CHART_COLORS_LIGHT = [
+    '#4a7aa8', '#3d8f7a', '#b88a4a', '#7a5a9e', '#b06a6a',
+    '#4a9a4a', '#5a5aaa', '#7a9a48', '#5a7aaa', '#aa7a4a'
+];
+
+/** Muted but clearly colored palette for pie/donut — dark theme */
+var DONUT_CHART_COLORS_DARK = [
+    '#6a9cc4', '#5ab09a', '#d4a858', '#9a7ab8', '#c88a8a',
+    '#6aba6a', '#7a7ac8', '#8ab068', '#7a8ac8', '#c89a6a'
+];
+
 var EMPTY_LABEL = __('Не определено');
 
 function applyAllRiskFilters(frm) {
@@ -190,6 +202,7 @@ function buildDonutOption(frm, data, selectedValue) {
         };
     });
     return {
+        color: isDarkTheme() ? DONUT_CHART_COLORS_DARK : DONUT_CHART_COLORS_LIGHT,
         tooltip: {
             trigger: 'item',
             formatter: function(params) {
@@ -383,7 +396,7 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
             frm._risk_matrix_selected_cell = null;
         } else {
             frm._risk_matrix_selected_cell = { probability: it.probability, impact: it.impact };
-            frappe.show_alert({ message: __('Отфильтровано по: Вероятность: {0} × Влияние: {1}', [it.probability, it.impact]), indicator: 'blue' }, 3);
+            //frappe.show_alert({ message: __('Отфильтровано по: Вероятность: {0} × Влияние: {1}', [it.probability, it.impact]), indicator: 'blue' }, 3);
         }
         applyAllRiskFilters(frm);
         applyMatrixSelectionHighlight(frm);
