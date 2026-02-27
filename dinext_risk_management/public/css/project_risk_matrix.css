@@ -1,7 +1,7 @@
 /* Risk matrix row: matrix (left) + donut panel (right); column only below 980px */
 .risk-matrix-row {
     display: flex;
-    align-items: flex-start;
+    align-items: stretch;
     flex-wrap: nowrap;
 }
 
@@ -22,6 +22,8 @@
     flex: 1;
     max-width: 420px;
     padding-top: 28px;
+    display: flex;
+    flex-direction: column;
 }
 
 .risk-donut-panel .form-group {
@@ -30,9 +32,11 @@
 
 .risk-donut-chart-container {
     width: 100%;
-    min-height: 140px;
-    aspect-ratio: 1;
-    max-height: 160px;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 @media (max-width: 980px) {
@@ -49,5 +53,9 @@
 
     .risk-donut-panel {
         max-width: 100%;
+    }
+
+    .risk-donut-chart-container {
+        min-height: 140px;
     }
 }
