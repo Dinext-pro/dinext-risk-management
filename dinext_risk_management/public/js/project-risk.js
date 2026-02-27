@@ -284,6 +284,10 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
         try { frm._risk_donut_chart.dispose(); } catch (e) {}
         frm._risk_donut_chart = null;
     }
+    if (frm._risk_matrix_resize_observer) {
+        frm._risk_matrix_resize_observer.disconnect();
+        frm._risk_matrix_resize_observer = null;
+    }
     field.$wrapper.find('.risk-matrix-row').remove();
     var row = $('<div class="risk-matrix-row"></div>');
     var leftCol = $('<div></div>');
@@ -437,6 +441,13 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
     setTimeout(function() {
         if (frm._risk_donut_chart) frm._risk_donut_chart.resize();
     }, 50);
+    if (typeof ResizeObserver !== 'undefined' && donutContainer && donutContainer[0]) {
+        frm._risk_matrix_resize_observer = new ResizeObserver(function() {
+            if (frm._risk_matrix_chart) frm._risk_matrix_chart.resize();
+            if (frm._risk_donut_chart) frm._risk_donut_chart.resize();
+        });
+        frm._risk_matrix_resize_observer.observe(donutContainer[0]);
+    }
 }
 
 function ensureThemeObserver() {
