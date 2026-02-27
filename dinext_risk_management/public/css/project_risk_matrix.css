@@ -1,7 +1,6 @@
 /* Risk matrix row: matrix (left) + donut panel (right); column only below 980px */
 .risk-matrix-row {
     display: flex;
-    gap: 24px;
     align-items: flex-start;
     flex-wrap: nowrap;
 }
@@ -19,7 +18,7 @@
 
 /* Right panel: dropdown + donut */
 .risk-donut-panel {
-    min-width: 280px;
+    min-width: 10vw;
     flex: 1;
     max-width: 420px;
     padding-top: 28px;

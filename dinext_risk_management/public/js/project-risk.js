@@ -178,19 +178,6 @@ function applyMatrixSelectionHighlight(frm) {
     chart.setOption({ series: [{ data: data }] });
 }
 
-function addClearFilterButton(frm) {
-    /*var field = frm.fields_dict['custom_risk_matrix'];
-    if (!field || !field.$wrapper) return;
-    if (field.$wrapper.find('.risk-matrix-clear-filter-btn').length) return;
-    var btn = $('<button class="btn btn-sm btn-default risk-matrix-clear-filter-btn" style="margin-bottom:10px;">' + __('Сбросить фильтр') + '</button>');
-    btn.on('click', function() {
-        clearRiskFilter(frm);
-        frm._risk_matrix_selected_cell = null;
-        applyMatrixSelectionHighlight(frm);
-    });
-    field.$wrapper.prepend(btn);/* */
-}
-
 function buildDonutOption(frm, data, selectedValue) {
     var textColor = isDarkTheme() ? '#e0e0e0' : '#374151';
     var seriesData = (data || []).map(function(item, idx) {
@@ -473,7 +460,6 @@ async function renderRiskMatrixWrapper(frm) {
         }
         var matrixData = buildMatrixData(frm, dims.impacts, dims.probabilities, dims.levels);
         renderRiskMatrix(frm, matrixData, dims.impacts, dims.probabilities);
-        addClearFilterButton(frm);
         _lastRiskMatrixForm = frm;
         ensureThemeObserver();
     } catch (e) {
