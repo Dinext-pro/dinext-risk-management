@@ -210,16 +210,27 @@ function buildDonutOption(frm, data, selectedValue) {
                 return (p.name || '') + ': ' + (p.value || 0) + ' (' + (p.percent || 0).toFixed(1) + '%)';
             }
         },
+        labelLayout: {
+            hideOverlap: false,
+            moveOverlap: 'shiftY',
+            bleedMargin: 8
+        },
         series: [{
             type: 'pie',
-            radius: '70%',
+            radius: ['45%', '65%'],
             center: ['50%', '50%'],
             data: seriesData,
+            avoidLabelOverlap: true,
+            labelLine: {
+                show: true,
+                length: 8,
+                length2: 12
+            },
             label: {
                 color: textColor,
                 formatter: function(params) {
                     var n = params.name;
-                    if (n && n.length > 18) n = n.slice(0, 16) + '…';
+                    if (n && n.length > 22) n = n.slice(0, 20) + '…';
                     return (n || '') + '\n' + (params.value || 0);
                 }
             },
