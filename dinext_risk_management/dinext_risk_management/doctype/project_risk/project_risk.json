@@ -20,7 +20,15 @@
   "owner_link_doctype",
   "owner_person",
   "responsible_link_doctype",
-  "responsible_person"
+  "responsible_person",
+  "reserve_section",
+  "contingency_reserve",
+  "reserve_account",
+  "reserve_period",
+  "reserve_method",
+  "reserve_amount",
+  "reserve_percent",
+  "reserve_basis_account"
  ],
  "fields": [
   {
@@ -144,13 +152,69 @@
    "label": "\u041e\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0435\u043d\u043d\u044b\u0439",
    "mandatory_depends_on": "eval:doc.status != 'Open'",
    "options": "responsible_link_doctype"
+  },
+  {
+   "fieldname": "reserve_section",
+   "fieldtype": "Section Break",
+   "label": "\u0420\u0435\u0437\u0435\u0440\u0432\u044b \u043d\u0430 \u0440\u0438\u0441\u043a"
+  },
+  {
+   "default": "0",
+   "fieldname": "contingency_reserve",
+   "fieldtype": "Check",
+   "label": "\u041d\u0430\u0447\u0438\u0441\u043b\u044f\u0442\u044c \u0440\u0435\u0437\u0435\u0440\u0432\u044b"
+  },
+  {
+   "depends_on": "eval:doc.contingency_reserve",
+   "fieldname": "reserve_account",
+   "fieldtype": "Link",
+   "label": "\u0423\u0447\u0451\u0442\u043d\u0430\u044f \u0441\u0442\u0430\u0442\u044c\u044f \u043d\u0430\u0447\u0438\u0441\u043b\u0435\u043d\u0438\u044f (P&L)",
+   "link_filters": "[[\"Account\",\"disabled\",\"=\",0],[\"Account\",\"report_type\",\"=\",\"Profit and Loss\"]]",
+   "options": "Account"
+  },
+  {
+   "depends_on": "eval:doc.contingency_reserve",
+   "description": "\u0412 \u043f\u043e\u0441\u043b\u0435\u0434\u043d\u0438\u0439 \u0434\u0435\u043d\u044c \u043f\u0435\u0440\u0438\u043e\u0434\u0430",
+   "fieldname": "reserve_period",
+   "fieldtype": "Select",
+   "label": "\u041f\u0435\u0440\u0438\u043e\u0434\u0438\u0447\u043d\u043e\u0441\u0442\u044c \u043d\u0430\u0447\u0438\u0441\u043b\u0435\u043d\u0438\u044f",
+   "options": "\u041c\u0435\u0441\u044f\u0446\n\u041a\u0432\u0430\u0440\u0442\u0430\u043b\n\u0413\u043e\u0434\n\u041f\u0440\u043e\u0435\u043a\u0442"
+  },
+  {
+   "depends_on": "eval:doc.contingency_reserve",
+   "fieldname": "reserve_method",
+   "fieldtype": "Select",
+   "label": "\u041c\u0435\u0442\u043e\u0434 \u0440\u0430\u0441\u0447\u0451\u0442\u0430 \u0440\u0435\u0437\u0435\u0440\u0432\u0430",
+   "options": "\u0421\u0443\u043c\u043c\u0430\n\u041f\u0440\u043e\u0446\u0435\u043d\u0442"
+  },
+  {
+   "depends_on": "eval:doc.contingency_reserve && doc.reserve_method == '\u0421\u0443\u043c\u043c\u0430'",
+   "fieldname": "reserve_amount",
+   "fieldtype": "Currency",
+   "label": "\u0421\u0443\u043c\u043c\u0430 \u0440\u0435\u0437\u0435\u0440\u0432\u0430",
+   "precision": "2"
+  },
+  {
+   "depends_on": "eval:doc.contingency_reserve && doc.reserve_method == '\u041f\u0440\u043e\u0446\u0435\u043d\u0442'",
+   "fieldname": "reserve_percent",
+   "fieldtype": "Percent",
+   "label": "\u041f\u0440\u043e\u0446\u0435\u043d\u0442",
+   "precision": "2"
+  },
+  {
+   "depends_on": "eval:doc.contingency_reserve && doc.reserve_method == '\u041f\u0440\u043e\u0446\u0435\u043d\u0442'",
+   "fieldname": "reserve_basis_account",
+   "fieldtype": "Link",
+   "label": "\u0420\u0430\u0441\u0447\u0451\u0442\u043d\u0430\u044f \u0431\u0430\u0437\u0430",
+   "link_filters": "[[\"Account\",\"disabled\",\"=\",0],[\"Account\",\"report_type\",\"=\",\"Profit and Loss\"]]",
+   "options": "Account"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-02-25 23:20:17.982383",
+ "modified": "2026-02-28 22:41:35.528211",
  "modified_by": "Administrator",
  "module": "Dinext Risk Management",
  "name": "Project Risk",
