@@ -118,15 +118,15 @@ function buildMatrixDataFromRisks(risks, impacts, probabilities, levels) {
 }
 
 var DONUT_CHART_TYPES = [
-    { value: 'category', label: __('По категориям') },
-    { value: 'status', label: __('По статусам') },
-    { value: 'priority', label: __('По приоритетам') },
-    { value: 'impact', label: __('По влиянию') },
-    { value: 'probability', label: __('По вероятности') },
-    { value: 'level', label: __('По уровням') },
-    { value: 'strategy', label: __('По стратегии') },
-    { value: 'owner_person', label: __('По владельцам') },
-    { value: 'responsible_person', label: __('По ответственным') }
+    { value: 'category', label: __('Категория') },
+    { value: 'status', label: __('Статус') },
+    { value: 'priority', label: __('Приоритет') },
+    { value: 'impact', label: __('Влияние') },
+    { value: 'probability', label: __('Вероятность') },
+    { value: 'level', label: __('Уровень') },
+    { value: 'strategy', label: __('Стратегия') },
+    { value: 'owner_person', label: __('Владелец') },
+    { value: 'responsible_person', label: __('Ответственный') }
 ];
 
 /** Muted but clearly colored palette for pie/donut — light theme */
