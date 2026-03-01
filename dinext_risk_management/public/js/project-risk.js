@@ -613,6 +613,88 @@ function bindRiskTabListenerOnce(frm) {
     frm._risk_tab_listener_bound = true;
 }
 
+/** Return risks eligible for reserve: contingency_reserve set and status !== 'Closed'. */
+function getReserveRisksEligible(frm) {
+    var rows = frm.doc.custom_project_risks || [];
+    var out = [];
+    for (var i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        if (r.contingency_reserve && r.status !== 'Closed') {
+            out.push({ index: i, row: r });
+        }
+    }
+    return out;
+}
+
+function formatReserveMagnitude(row) {
+    if (row.reserve_method === 'Сумма') {
+        return row.reserve_amount != null ? format_currency(row.reserve_amount, row.currency || frappe.defaults.get_default('currency'), 2) : '';
+    }
+    if (row.reserve_method === 'Процент') {
+        return row.reserve_percent != null ? flt(row.reserve_percent, 2) + '%' : '';
+    }
+    return '';
+}
+
+function openReserveRisksDialog(frm) {
+    var eligible = getReserveRisksEligible(frm);
+    if (!eligible.length) {
+        frappe.msgprint(__('Нет актуальных рисков с начислением резерва.'));
+        return;
+    }
+
+    var data = eligible.map(function(item, i) {
+        return {
+            name: 'risk-' + i,
+            idx: i + 1,
+            subject: item.row.subject || '',
+            reserve_account: item.row.reserve_account || '',
+            reserve_period: item.row.reserve_period || '',
+            reserve_method: item.row.reserve_method || '',
+            magnitude: formatReserveMagnitude(item.row),
+            _source_index: item.index
+        };
+    });
+
+    var dialog = new frappe.ui.Dialog({
+        title: __('Включить резерв на риски'),
+        size: 'large',
+        fields: [
+            {
+                fieldname: 'reserve_risks_table',
+                fieldtype: 'Table',
+                options: '',
+                cannot_add_rows: 1,
+                cannot_delete_rows: 1,
+                in_place_edit: true,
+                fields: [
+                    { fieldname: 'idx', fieldtype: 'Int', label: __('№'), in_list_view: 1, read_only: 1, columns: 1 },
+                    { fieldname: 'subject', fieldtype: 'Data', label: __('Риск'), in_list_view: 1, read_only: 1, columns: 3 },
+                    { fieldname: 'reserve_account', fieldtype: 'Data', label: __('Статья начисления'), in_list_view: 1, read_only: 1, columns: 2 },
+                    { fieldname: 'reserve_period', fieldtype: 'Data', label: __('Период'), in_list_view: 1, read_only: 1, columns: 2 },
+                    //{ fieldname: 'reserve_method', fieldtype: 'Data', label: __('Метод'), in_list_view: 1, read_only: 1, columns: 1 },
+                    { fieldname: 'magnitude', fieldtype: 'Data', label: __('Величина'), in_list_view: 1, read_only: 1, columns: 2 },
+                    { fieldname: '_source_index', fieldtype: 'Int', hidden: 1 }
+                ],
+                data: data
+            }
+        ],
+        primary_action_label: __('Рассчитать'),
+        primary_action: function( values ) {
+            var selected = values.reserve_risks_table 
+                ? values.reserve_risks_table.filter(risk => risk.__checked ) 
+                : [];
+            // selected — в порядке строк в таблице; _source_index для будущего расчёта
+            dialog.hide();
+        },
+        secondary_action_label: __('Закрыть'),
+        secondary_action: function() {
+            dialog.hide();
+        }
+    });
+    dialog.show();  
+}
+
 frappe.ui.form.on('Project', {
     refresh: function(frm) {
         // Show "Включить резерв на риски" in "Рассчитать прогноз" menu only when project has risks with reserve
@@ -624,7 +706,7 @@ frappe.ui.form.on('Project', {
         if (has_reserve_risks) {
             dinext_projects.project_pl_forecast_menu.push({
                 label: __("Включить резерв на риски"),
-                action: function(frm) { /* placeholder */ },
+                action: function(frm) { openReserveRisksDialog(frm); },
                 __dinext_risk_reserve_forecast: true
             });
         }
