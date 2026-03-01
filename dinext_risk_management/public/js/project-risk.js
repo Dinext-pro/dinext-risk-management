@@ -3,6 +3,12 @@
 
 var _lastRiskMatrixForm = null;
 
+// Ensure "Рассчитать прогноз" menu array exists for Dinext Projects (used in refresh to add our item conditionally)
+frappe.provide("dinext_projects.project_pl_forecast_menu");
+if (!Array.isArray(dinext_projects.project_pl_forecast_menu)) {
+    dinext_projects.project_pl_forecast_menu = [];
+}
+
 function loadEcharts() {
     if (window.echarts) return Promise.resolve();
     return new Promise(function(resolve, reject) {
@@ -609,6 +615,19 @@ function bindRiskTabListenerOnce(frm) {
 
 frappe.ui.form.on('Project', {
     refresh: function(frm) {
+        // Show "Включить резерв на риски" in "Рассчитать прогноз" menu only when project has risks with reserve
+        dinext_projects.project_pl_forecast_menu = dinext_projects.project_pl_forecast_menu.filter(function(item) {
+            return !item.__dinext_risk_reserve_forecast;
+        });
+        var risks = frm.doc.custom_project_risks || [];
+        var has_reserve_risks = risks.some(function(r) { return r.contingency_reserve; });
+        if (has_reserve_risks) {
+            dinext_projects.project_pl_forecast_menu.push({
+                label: __("Включить резерв на риски"),
+                action: function(frm) { /* placeholder */ },
+                __dinext_risk_reserve_forecast: true
+            });
+        }
         if (frm.doc.name && !frm.is_new()) {
             renderRiskMatrixWrapper(frm);
             bindRiskTabListenerOnce(frm);
