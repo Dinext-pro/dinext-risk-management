@@ -645,7 +645,7 @@ function openReserveRisksDialog(frm) {
 
     var data = eligible.map(function(item, i) {
         return {
-            name: 'risk-' + i,
+            name: item.row.name,
             idx: i + 1,
             subject: item.row.subject || '',
             reserve_account: item.row.reserve_account || '',
@@ -680,12 +680,36 @@ function openReserveRisksDialog(frm) {
             }
         ],
         primary_action_label: __('Рассчитать'),
-        primary_action: function( values ) {
-            var selected = values.reserve_risks_table 
-                ? values.reserve_risks_table.filter(risk => risk.__checked ) 
-                : [];
-            // selected — в порядке строк в таблице; _source_index для будущего расчёта
-            dialog.hide();
+        primary_action: function() {
+            var grid = dialog.fields_dict.reserve_risks_table && dialog.fields_dict.reserve_risks_table.grid;
+            var selected = grid ? grid.get_selected_children() : [];
+            var selected_source_names = selected.map(function(r) { return r.name; });
+            if (!selected_source_names.length) {
+                frappe.msgprint(__('Выберите хотя бы один риск для расчёта.'));
+                return;
+            }
+            frappe.call({
+                method: 'dinext_risk_management.dinext_risk_management.calculate_reserve_and_update_budget',
+                args: {
+                    project: frm.doc.name,
+                    selected_source_names: selected_source_names
+                },
+                freeze: true,
+                freeze_message: __('Расчёт резерва...'),
+                callback: function(r) {
+                    if (r.exc) {
+                        frappe.msgprint({ title: __('Ошибка'), message: r.exc && r.exc[0] ? r.exc[0] : __('Ошибка при расчёте резерва'), indicator: 'red' });
+                        return;
+                    }
+                    frappe.show_alert({ message: __('Резерв рассчитан и добавлен в прогноз'), indicator: 'green' }, 5);
+                    dialog.hide();
+                    if (frm.aggregatedBudget && typeof frm.events.load_budget_data === 'function') {
+                        frm.events.load_budget_data(frm, 'month', true);
+                    } else if (cur_frm && cur_frm.doc && cur_frm.doc.name === frm.doc.name && cur_frm.aggregatedBudget) {
+                        if (typeof load_budget_data === 'function') load_budget_data(cur_frm, 'month', true);
+                    }
+                }
+            });
         },
         secondary_action_label: __('Закрыть'),
         secondary_action: function() {
