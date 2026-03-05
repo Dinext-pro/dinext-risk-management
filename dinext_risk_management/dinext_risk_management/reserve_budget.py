@@ -59,12 +59,48 @@ def get_periods_for_reserve(reserve_period, start_date, end_date):
 	frappe.log("get_periods_for_reserve period=%s start=%s end=%s -> %s periods" % (reserve_period, start, end, len(periods)))
 	return periods
 
+def get_basis_amounts_by_period(project, basis_account, dimensions, periods):
+	"""
+	Get pba_expected amounts from Project Budget for the basis account and dimensions.
+	Returns dict {(year, month): amount}. Missing periods get 0.0.
+	"""
+	if not basis_account or not periods:
+		return {p: 0.0 for p in periods} if periods else {}
+	budget_name = find_project_budget(project, basis_account, dimensions)
+	if not budget_name:
+		frappe.log("get_basis_amounts_by_period: no Project Budget project=%s account=%s dims=%s"
+			% (project, basis_account, dimensions_key(dimensions)))
+		return {p: 0.0 for p in periods}
+	doc = frappe.get_cached_doc("Project Budget", budget_name)
+	amounts = {}
+	for row in doc.get("project_budget_amount") or []:
+		if row.pba_year is not None:
+			key = (row.pba_year, row.pba_month)
+			amounts[key] = float(row.pba_expected or 0)
+	return {p: amounts.get(p, 0.0) for p in periods}
 
-def get_reserve_amount_for_period(row):
+
+def get_reserve_amounts_by_period(row, periods, project, dimensions, company):
+	"""
+	Return reserve amount per period: {(year, month): amount}.
+	- Сумма: same amount for every period.
+	- Процент: base (pba_expected of reserve_basis_account) * reserve_percent / 100 per period; missing base -> 0.
+	"""
+	if not periods:
+		return {}
 	method = (row.get("reserve_method") or "").strip()
 	if method == "Сумма":
-		return float(row.get("reserve_amount") or 0)
-	return 0.0
+		amount = float(row.get("reserve_amount") or 0)
+		return {p: amount for p in periods}
+	if method == "Процент":
+		basis_account = (row.get("reserve_basis_account") or "").strip()
+		percent = float(row.get("reserve_percent") or 0)
+		if not basis_account:
+			frappe.log("get_reserve_amounts_by_period: Процент but no reserve_basis_account, using zeros")
+			return {p: 0.0 for p in periods}
+		basis = get_basis_amounts_by_period(project, basis_account, dimensions, periods)
+		return {p: basis.get(p, 0.0) * percent / 100.0 for p in periods}
+	return {}
 
 
 def account_has_task_dimension(account, company):
@@ -115,15 +151,19 @@ def find_project_budget(project, account, dimensions):
 	return None
 
 
-def add_reserve_to_budget(project, account, dimensions, periods, amount_per_period, company):
-	if not periods or amount_per_period <= 0:
-		frappe.log("add_reserve_to_budget: skip (no periods or amount<=0)")
+def add_reserve_to_budget(project, account, dimensions, period_amount_map, company):
+	"""
+	Merge reserve amounts into Project Budget. period_amount_map: {(year, month): amount}.
+	Only updates the given periods; other existing periods are left unchanged.
+	"""
+	if not period_amount_map:
+		frappe.log("add_reserve_to_budget: skip (no period_amount_map)")
 		return
 	existing = find_project_budget(project, account, dimensions)
 	if existing:
 		doc = frappe.get_doc("Project Budget", existing)
-		frappe.log("add_reserve_to_budget: update existing Project Budget name=%s project=%s account=%s dims=%s periods=%s amount=%s"
-			% (existing, project, account, dimensions_key(dimensions), len(periods), amount_per_period))
+		frappe.log("add_reserve_to_budget: update existing Project Budget name=%s project=%s account=%s dims=%s periods=%s"
+			% (existing, project, account, dimensions_key(dimensions), len(period_amount_map)))
 	else:
 		frappe.has_permission("Project Budget", "create", throw=True)
 		doc = frappe.new_doc("Project Budget")
@@ -131,27 +171,28 @@ def add_reserve_to_budget(project, account, dimensions, periods, amount_per_peri
 		doc.pb_account = account
 		for d in dimensions:
 			doc.append("project_budget_dimension", {"doc": d["doc"], "docname": d["docname"]})
-		frappe.log("add_reserve_to_budget: create new Project Budget project=%s account=%s dims=%s periods=%s amount=%s"
-			% (project, account, dimensions_key(dimensions), len(periods), amount_per_period))
+		frappe.log("add_reserve_to_budget: create new Project Budget project=%s account=%s dims=%s periods=%s"
+			% (project, account, dimensions_key(dimensions), len(period_amount_map)))
 	amount_map = {}
 	existing_plan = {}
-
 	for row in doc.get("project_budget_amount") or []:
-		fy_val = row.pba_year
-		if fy_val is None:
+		if row.pba_year is None:
 			continue
-		key = (fy_val, row.pba_month)
+		key = (row.pba_year, row.pba_month)
 		amount_map[key] = float(row.pba_expected or 0)
 		existing_plan[key] = row.pba_plan
-		amount_map[key] = amount_per_period
-
+	for key, value in period_amount_map.items():
+		amount_map[key] = float(value)
+		if key not in existing_plan:
+			existing_plan[key] = 0
 	doc.project_budget_amount = []
 	for (fy, month), value in sorted(amount_map.items(), key=lambda x: (x[0][0], x[0][1])):
 		plan = existing_plan.get((fy, month), 0)
 		doc.append("project_budget_amount", {
 			"pba_year": fy, "pba_month": month, "pba_plan": plan, "pba_expected": value
-		})		
+		})
 	doc.save()
+	frappe.db.commit()
 	frappe.log("add_reserve_to_budget: saved Project Budget name=%s" % (doc.name,))
 
 
@@ -178,8 +219,9 @@ def calculate_reserve_and_update_budget(project, selected_source_names):
 		return {"message": "No risks on project", "updated": 0 }
 	updated = 0
 	for name in selected_source_names:
-		#row = risks[idx]
 		row = next((x for x in risks if x.get("name") == name), None)
+		if not row:
+			continue
 		if not row.get("contingency_reserve") or row.get("status") == "Closed":
 			frappe.log("calculate_reserve_and_update_budget: skip name=%s contingency_reserve=%s status=%s"
 				% (name, row.get("contingency_reserve"), row.get("status")))
@@ -189,21 +231,22 @@ def calculate_reserve_and_update_budget(project, selected_source_names):
 		if not reserve_account:
 			frappe.log("calculate_reserve_and_update_budget: skip name=%s no reserve_account" % (name,))
 			continue
-		amount_per_period = get_reserve_amount_for_period(row)
-		if amount_per_period <= 0:
-			frappe.log("calculate_reserve_and_update_budget: skip name=%s amount_per_period<=0 (method=%s)"
-				% (name, row.get("reserve_method")))
-			continue
-		dimensions = [{"doc": "Project Risk", "docname": row.get("name") or str(name)}]
+		method = (row.get("reserve_method") or "").strip()
+		dimensions = []
 		if row.get("task") and account_has_task_dimension(reserve_account, company):
 			dimensions.append({"doc": "Task", "docname": row.get("task")})
 		periods = get_periods_for_reserve(reserve_period, start_date, end_date)
 		if not periods:
 			frappe.log("calculate_reserve_and_update_budget: skip name=%s no periods for reserve_period=%s" % (name, reserve_period))
 			continue
-		frappe.log("calculate_reserve_and_update_budget: process risk row_name=%s account=%s period=%s periods=%s amount=%s"
-			% (row.get("name"), reserve_account, reserve_period, len(periods), amount_per_period))
-		add_reserve_to_budget(project, reserve_account, dimensions, periods, amount_per_period, company)
+		period_amounts = get_reserve_amounts_by_period(row, periods, project, dimensions, company)
+		if all(period_amounts.get(p, 0) <= 0 for p in periods):
+			frappe.log("calculate_reserve_and_update_budget: skip name=%s Сумма amount<=0" % (name,))
+			continue
+		dimensions.append({"doc": "Project Risk", "docname": row.get("name") or str(name)})
+		frappe.log("calculate_reserve_and_update_budget: process risk row_name=%s account=%s period=%s periods=%s method=%s amounts=%s"
+			% (row.get("name"), reserve_account, reserve_period, len(periods), method, frappe.utils.cstr( period_amounts ) ))
+		add_reserve_to_budget(project, reserve_account, dimensions, period_amounts, company)
 		updated += 1
 	frappe.log("calculate_reserve_and_update_budget: done project=%s updated=%s" % (project, updated))
 	return {"message": "OK", "updated": updated}
