@@ -197,12 +197,14 @@ def add_reserve_to_budget(project, account, dimensions, period_amount_map, compa
 
 
 @frappe.whitelist()
-def calculate_reserve_and_update_budget(project, selected_source_names):
+def calculate_reserve_and_update_budget(project, selected_source_names, reserve_periods=None):
 	frappe.log("_________________ Calculate Risk Reserve & Update Project Budget _________________")
 	frappe.log("calculate_reserve_and_update_budget: start project=%s selected_source_names=%s" % (project, selected_source_names))
 	frappe.has_permission("Project Budget", "write", throw=True)
 	if isinstance(selected_source_names, str):
 		selected_source_names = json.loads(selected_source_names)
+	if reserve_periods is not None and isinstance(reserve_periods, str):
+		reserve_periods = json.loads(reserve_periods) if reserve_periods else None
 
 	if not project or not selected_source_names:
 		frappe.log("calculate_reserve_and_update_budget: no project or no risks selected")
@@ -212,6 +214,12 @@ def calculate_reserve_and_update_budget(project, selected_source_names):
 	start_date = project_doc.get("expected_start_date") or getdate()
 	end_date = project_doc.get("expected_end_date") or add_to_date(getdate(), months=12)
 	risks = project_doc.get("custom_project_risks") or []
+
+	periods_from_frontend = None
+	if reserve_periods and len(reserve_periods) > 0:
+		periods_from_frontend = [(int(p["year"]), int(p["month"])) for p in reserve_periods]
+		frappe.log("calculate_reserve_and_update_budget: using reserve_periods from frontend count=%s" % len(periods_from_frontend))
+
 	frappe.log("calculate_reserve_and_update_budget: project=%s company=%s start=%s end=%s risks_count=%s"
 		% (project, company, start_date, end_date, len(risks)))
 	if not risks:
@@ -235,7 +243,10 @@ def calculate_reserve_and_update_budget(project, selected_source_names):
 		dimensions = []
 		if row.get("task") and account_has_task_dimension(reserve_account, company):
 			dimensions.append({"doc": "Task", "docname": row.get("task")})
-		periods = get_periods_for_reserve(reserve_period, start_date, end_date)
+		if periods_from_frontend is not None:
+			periods = periods_from_frontend
+		else:
+			periods = get_periods_for_reserve(reserve_period, start_date, end_date)
 		if not periods:
 			frappe.log("calculate_reserve_and_update_budget: skip name=%s no periods for reserve_period=%s" % (name, reserve_period))
 			continue
