@@ -688,12 +688,20 @@ function openReserveRisksDialog(frm) {
                 frappe.msgprint(__('Выберите хотя бы один риск для расчёта.'));
                 return;
             }
+            var args = {
+                project: frm.doc.name,
+                selected_source_names: selected_source_names
+            };
+            if (typeof get_budget_display_periods === 'function') {
+                var all_periods = get_budget_display_periods(frm, 'month') || [];
+                var future_periods = all_periods.filter(function(p) { return p.is_past === false; });
+                if (future_periods.length) {
+                    args.reserve_periods = future_periods.map(function(p) { return { year: p.year, month: p.month }; });
+                }
+            }
             frappe.call({
                 method: 'dinext_risk_management.dinext_risk_management.calculate_reserve_and_update_budget',
-                args: {
-                    project: frm.doc.name,
-                    selected_source_names: selected_source_names
-                },
+                args: args,
                 freeze: true,
                 freeze_message: __('Расчёт резерва...'),
                 callback: function(r) {
