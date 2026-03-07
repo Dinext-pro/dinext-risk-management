@@ -650,19 +650,6 @@ function getReservePeriods(frm, reserve_period) {
     if (typeof get_budget_display_periods === 'function') {
         allPeriods = get_budget_display_periods(frm, 'month') || [];
     }
-    if (!allPeriods.length && frm.doc.expected_start_date && frm.doc.expected_end_date) {
-        var start = frappe.datetime.str_to_obj(frm.doc.expected_start_date);
-        var end = frappe.datetime.str_to_obj(frm.doc.expected_end_date);
-        var monthStart = frappe.datetime.str_to_obj(frappe.datetime.month_start());
-        var current = start;
-        while (frappe.datetime.obj_to_str(current) <= frappe.datetime.obj_to_str(end)) {
-            var y = current.getFullYear();
-            var m = current.getMonth() + 1;
-            var isPast = (y < monthStart.getFullYear()) || (y === monthStart.getFullYear() && m < monthStart.getMonth() + 1);
-            allPeriods.push({ year: y, month: m, is_past: isPast });
-            current = frappe.datetime.str_to_obj(frappe.datetime.add_months(current, 1));
-        }
-    }
     if (!allPeriods.length) return [];
     // Reserve only in future periods (is_past === false)
     var futurePeriods = allPeriods.filter(function(p) { return p.is_past === false; });
