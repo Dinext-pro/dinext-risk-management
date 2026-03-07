@@ -613,6 +613,173 @@ function bindRiskTabListenerOnce(frm) {
     frm._risk_tab_listener_bound = true;
 }
 
+/** Build sortable key for dimensions (matches backend dimensions_key). */
+function reserveDimensionsKey(dimensions) {
+    if (!dimensions || !dimensions.length) return '';
+    var parts = dimensions
+        .filter(function(d) { return d && d.doc; })
+        .map(function(d) { return d.doc + ':' + (d.docname || ''); })
+        .sort();
+    return parts.join('|');
+}
+
+/** Return true if dimensions arrays match (same doc:docname set). */
+function reserveDimensionsEqual(dim1, dim2) {
+    return reserveDimensionsKey(dim1) === reserveDimensionsKey(dim2);
+}
+
+/** Check if account has Task dimension from aggregatedBudget (Accounting Dimension Filter data). */
+function accountHasTaskDimension(aggregatedBudget, account) {
+    if (!aggregatedBudget || !account) return false;
+    var row = aggregatedBudget[account];
+    if (!row || !row.allowed_dimensions) return false;
+    return row.allowed_dimensions.some(function(ad) {
+        return ad && ad.document_type === 'Task';
+    });
+}
+
+/**
+ * Get periods for reserve by type. Uses get_budget_display_periods when available (project_pl.js).
+ * Reserve is applied only to periods where is_past === false (future periods).
+ * reserve_period: "Месяц" | "Квартал" | "Год" | "Проект" | "Задача" | "Проект / Задача"
+ * Returns [{ year, month }].
+ */
+function getReservePeriods(frm, reserve_period) {
+    var periodType = (reserve_period || 'Месяц').trim();
+    var allPeriods = [];
+    if (typeof get_budget_display_periods === 'function') {
+        allPeriods = get_budget_display_periods(frm, 'month') || [];
+    }
+    if (!allPeriods.length && frm.doc.expected_start_date && frm.doc.expected_end_date) {
+        var start = frappe.datetime.str_to_obj(frm.doc.expected_start_date);
+        var end = frappe.datetime.str_to_obj(frm.doc.expected_end_date);
+        var monthStart = frappe.datetime.str_to_obj(frappe.datetime.month_start());
+        var current = start;
+        while (frappe.datetime.obj_to_str(current) <= frappe.datetime.obj_to_str(end)) {
+            var y = current.getFullYear();
+            var m = current.getMonth() + 1;
+            var isPast = (y < monthStart.getFullYear()) || (y === monthStart.getFullYear() && m < monthStart.getMonth() + 1);
+            allPeriods.push({ year: y, month: m, is_past: isPast });
+            current = frappe.datetime.str_to_obj(frappe.datetime.add_months(current, 1));
+        }
+    }
+    if (!allPeriods.length) return [];
+    // Reserve only in future periods (is_past === false)
+    var futurePeriods = allPeriods.filter(function(p) { return p.is_past === false; });
+    if (periodType === 'Месяц') {
+        return futurePeriods.map(function(p) { return { year: p.year, month: p.month }; });
+    }
+    if (periodType === 'Квартал') {
+        return futurePeriods.filter(function(p) {
+            return p.month === 3 || p.month === 6 || p.month === 9 || p.month === 12;
+        }).map(function(p) { return { year: p.year, month: p.month }; });
+    }
+    if (periodType === 'Год') {
+        var seenY = {};
+        return futurePeriods.filter(function(p) {
+            if (p.month !== 12) return false;
+            if (seenY[p.year]) return false;
+            seenY[p.year] = true;
+            return true;
+        }).map(function(p) { return { year: p.year, month: p.month }; });
+    }
+    if (periodType === 'Проект / Задача' || periodType === 'Проект' || periodType === 'Задача') {
+        var last = futurePeriods[futurePeriods.length - 1];
+        return last ? [{ year: last.year, month: last.month }] : [];
+    }
+    return futurePeriods.map(function(p) { return { year: p.year, month: p.month }; });
+}
+
+/**
+ * Get basis (forecast) amounts by period from aggregatedBudget for given account and dimensions.
+ * dimensions: without Project Risk (only Task if any). Returns object keyed by "year_month".
+ */
+function getBasisAmountsFromAggregated(aggregatedBudget, account, dimensions, periods) {
+    var out = {};
+    if (!aggregatedBudget || !account || !periods.length) return out;
+    var row = aggregatedBudget[account];
+    if (!row || !row.dimension_data) return out;
+    var bucket = row.dimension_data.find(function(b) {
+        return reserveDimensionsEqual(b.dimensions || [], dimensions);
+    });
+    if (!bucket) return out;
+    for (var i = 0; i < periods.length; i++) {
+        var p = periods[i];
+        var key = 'forecast_' + p.year + '_' + p.month;
+        out[p.year + '_' + p.month] = flt(bucket[key], 2);
+    }
+    return out;
+}
+
+/**
+ * Compute reserve amount per period for one risk row. Returns object {"Y_M": amount}.
+ */
+function getReserveAmountsByPeriod(row, periods, aggregatedBudget, frm) {
+    var periodAmountMap = {};
+    var method = (row.reserve_method || '').trim();
+    if (method === 'Сумма') {
+        var amount = flt(row.reserve_amount, 2);
+        for (var i = 0; i < periods.length; i++) {
+            var p = periods[i];
+            periodAmountMap[p.year + '_' + p.month] = amount;
+        }
+        return periodAmountMap;
+    }
+    if (method === 'Процент') {
+        var basisAccount = (row.reserve_basis_account || '').trim();
+        var percent = flt(row.reserve_percent, 2);
+        if (!basisAccount) return periodAmountMap;
+        var dimensionsForBasis = [];
+        if (row.task && accountHasTaskDimension(aggregatedBudget, (row.reserve_account || '').trim())) {
+            dimensionsForBasis.push({ doc: 'Task', docname: row.task });
+        }
+        var basis = getBasisAmountsFromAggregated(aggregatedBudget, basisAccount, dimensionsForBasis, periods);
+        for (var i = 0; i < periods.length; i++) {
+            var p = periods[i];
+            var k = p.year + '_' + p.month;
+            periodAmountMap[k] = flt((basis[k] || 0) * percent / 100, 2);
+        }
+        return periodAmountMap;
+    }
+    return periodAmountMap;
+}
+
+/**
+ * Build updates array for bulk_save_reserve_budgets from selected risk names.
+ * Requires frm.aggregatedBudget. Returns { updates: [...], skipped: number }.
+ */
+function buildReserveUpdates(frm, selected_source_names) {
+    var aggregatedBudget = frm.aggregatedBudget;
+    var risks = frm.doc.custom_project_risks || [];
+    var updates = [];
+    var skipped = 0;
+    for (var n = 0; n < selected_source_names.length; n++) {
+        var name = selected_source_names[n];
+        var row = risks.filter(function(r) { return r.name === name; })[0];
+        if (!row) { skipped++; continue; }
+        if (!row.contingency_reserve || row.status === 'Closed') { skipped++; continue; }
+        var reserveAccount = (row.reserve_account || '').trim();
+        if (!reserveAccount) { skipped++; continue; }
+        var reservePeriod = (row.reserve_period || 'Месяц').trim();
+        var periods = getReservePeriods(frm, reservePeriod);
+        if (!periods.length) { skipped++; continue; }
+        var dimensions = [];
+        if (row.task && accountHasTaskDimension(aggregatedBudget, reserveAccount)) {
+            dimensions.push({ doc: 'Task', docname: row.task });
+        }
+        dimensions.push({ doc: 'Project Risk', docname: row.name || name });
+        var periodAmountMap = getReserveAmountsByPeriod(row, periods, aggregatedBudget, frm);
+        var hasPositive = Object.keys(periodAmountMap).some(function(k) { return periodAmountMap[k] > 0; });
+        if (!hasPositive) { skipped++; continue; }
+        updates.push({
+            account: reserveAccount,
+            dimensions: dimensions,
+            period_amount_map: periodAmountMap
+        });
+    }
+    return { updates: updates, skipped: skipped };
+}
+
 /** Return risks eligible for reserve: contingency_reserve set and status !== 'Closed'. */
 function getReserveRisksEligible(frm) {
     var rows = frm.doc.custom_project_risks || [];
@@ -688,33 +855,49 @@ function openReserveRisksDialog(frm) {
                 frappe.msgprint(__('Выберите хотя бы один риск для расчёта.'));
                 return;
             }
-            var args = {
-                project: frm.doc.name,
-                selected_source_names: selected_source_names
-            };
-            if (typeof get_budget_display_periods === 'function') {
-                var all_periods = get_budget_display_periods(frm, 'month') || [];
-                var future_periods = all_periods.filter(function(p) { return p.is_past === false; });
-                if (future_periods.length) {
-                    args.reserve_periods = future_periods.map(function(p) { return { year: p.year, month: p.month }; });
+            if (!frm.aggregatedBudget) {
+                frappe.msgprint({
+                    title: __('Данные не загружены'),
+                    message: __('Проблема при загрузке данных P&L')
+                });
+                return;
+            }
+            var result = buildReserveUpdates(frm, selected_source_names);
+            var updates = result.updates;
+            if (result.skipped) {
+                if (frappe.boot.developer_mode) {
+                    console.log('reserve: selected=%s updates=%s skipped=%s', selected_source_names.length, updates.length, result.skipped);
                 }
             }
+            if (!updates.length) {
+                frappe.msgprint(__('Нет данных для сохранения. Проверьте выбранные риски (статья начисления, период, величина).'));
+                return;
+            }
+            if (frappe.boot.developer_mode) {
+                console.log('reserve: calling bulk_save_reserve_budgets project=%s updates=%s', frm.doc.name, updates.length);
+            }
             frappe.call({
-                method: 'dinext_risk_management.dinext_risk_management.calculate_reserve_and_update_budget',
-                args: args,
+                method: 'dinext_risk_management.dinext_risk_management.bulk_save_reserve_budgets',
+                args: {
+                    project: frm.doc.name,
+                    updates: updates
+                },
                 freeze: true,
-                freeze_message: __('Расчёт резерва...'),
+                freeze_message: __('Сохранение резерва...'),
                 callback: function(r) {
                     if (r.exc) {
-                        frappe.msgprint({ title: __('Ошибка'), message: r.exc && r.exc[0] ? r.exc[0] : __('Ошибка при расчёте резерва'), indicator: 'red' });
+                        if (frappe.boot.developer_mode) console.error('reserve: bulk_save error', r.exc);
+                        frappe.msgprint({ title: __('Ошибка'), message: r.exc && r.exc[0] ? r.exc[0] : __('Ошибка при сохранении резерва'), indicator: 'red' });
                         return;
                     }
+                    var updated = (r.message && r.message.updated) || 0;
+                    if (frappe.boot.developer_mode) console.log('reserve: bulk_save done updated=%s', updated);
                     frappe.show_alert({ message: __('Резерв рассчитан и добавлен в прогноз'), indicator: 'green' }, 5);
                     dialog.hide();
-                    if (frm.aggregatedBudget && typeof frm.events.load_budget_data === 'function') {
-                        frm.events.load_budget_data(frm, 'month', true);
-                    } else if (cur_frm && cur_frm.doc && cur_frm.doc.name === frm.doc.name && cur_frm.aggregatedBudget) {
-                        if (typeof load_budget_data === 'function') load_budget_data(cur_frm, 'month', true);
+                    if (typeof load_budget_data === 'function') {
+                        load_budget_data(frm, 'month', true);
+                    } else if (cur_frm && cur_frm.doc && cur_frm.doc.name === frm.doc.name && cur_frm.aggregatedBudget && typeof load_budget_data === 'function') {
+                        load_budget_data(cur_frm, 'month', true);
                     }
                 }
             });
