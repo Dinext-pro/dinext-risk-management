@@ -1,0 +1,38 @@
+[
+ {
+  "color_dark_theme": "#f20707",
+  "color_light_theme": "#CB2929",
+  "docstatus": 0,
+  "doctype": "Risk Priority",
+  "enabled": 1,
+  "modified": "2026-01-20 02:41:47.279757",
+  "name": "Срочный"
+ },
+ {
+  "color_dark_theme": "#EC864B",
+  "color_light_theme": "#EC864B",
+  "docstatus": 0,
+  "doctype": "Risk Priority",
+  "enabled": 1,
+  "modified": "2026-01-20 02:43:03.020632",
+  "name": "Высокий"
+ },
+ {
+  "color_dark_theme": "#ECAD4B",
+  "color_light_theme": "#ECAD4B",
+  "docstatus": 0,
+  "doctype": "Risk Priority",
+  "enabled": 1,
+  "modified": "2026-01-20 02:43:21.682560",
+  "name": "Средний"
+ },
+ {
+  "color_dark_theme": "#29CD42",
+  "color_light_theme": "#29CD42",
+  "docstatus": 0,
+  "doctype": "Risk Priority",
+  "enabled": 1,
+  "modified": "2026-01-20 02:43:44.618630",
+  "name": "Низкий"
+ }
+]

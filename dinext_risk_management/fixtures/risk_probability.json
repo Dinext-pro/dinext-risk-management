@@ -1,0 +1,47 @@
+[
+ {
+  "description": "Крайне маловероятно; может произойти в исключительных обстоятельствах.",
+  "docstatus": 0,
+  "doctype": "Risk Probability",
+  "enabled": 1,
+  "modified": "2026-01-22 21:42:05.885217",
+  "name": "Редко",
+  "value": 1
+ },
+ {
+  "description": "Может происходить время от времени.",
+  "docstatus": 0,
+  "doctype": "Risk Probability",
+  "enabled": 1,
+  "modified": "2026-01-22 21:42:06.745925",
+  "name": "Маловероятно",
+  "value": 2
+ },
+ {
+  "description": "Может произойти при определенных условиях.",
+  "docstatus": 0,
+  "doctype": "Risk Probability",
+  "enabled": 1,
+  "modified": "2026-01-22 21:42:07.608137",
+  "name": "Возможно",
+  "value": 3
+ },
+ {
+  "description": "Вероятно, произойдет в большинстве случаев.",
+  "docstatus": 0,
+  "doctype": "Risk Probability",
+  "enabled": 1,
+  "modified": "2026-01-22 21:42:08.579186",
+  "name": "Вероятно",
+  "value": 4
+ },
+ {
+  "description": "Ожидается, что будет происходить часто или в ближайшее время.",
+  "docstatus": 0,
+  "doctype": "Risk Probability",
+  "enabled": 1,
+  "modified": "2026-01-22 21:42:09.616320",
+  "name": "Почти наверняка",
+  "value": 5
+ }
+]
