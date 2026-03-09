@@ -80,7 +80,11 @@ app_include_css = "/assets/dinext_risk_management/css/project_risk_matrix.css"
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
-doctype_js = {"Project" : "public/js/project-risk.js"}
+doctype_js = {"Project" : 
+    [
+        "public/js/project-risk.js",
+        "public/js/project-risk-charts.js"
+    ]}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
