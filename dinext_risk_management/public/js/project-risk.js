@@ -341,6 +341,11 @@ function openReserveRisksDialog(frm) {
                     { fieldname: '_source_index', fieldtype: 'Int', hidden: 1 }
                 ],
                 data: data
+            },
+            {                
+                fieldname: 'reserve_risks_description',
+                fieldtype: 'HTML',
+                options: __("При добавлении / обновлении резервов на риски возможно обновление родительских статей для соблюдения логики иерархичности значений"),
             }
         ],
         primary_action_label: __('Рассчитать'),
@@ -432,6 +437,7 @@ frappe.ui.form.on('Project', {
                 action: function(frm) { openReserveRisksDialog(frm); },
                 __dinext_risk_reserve_forecast: true
             });
+            dinext_projects.refresh_pl_forecast_dropdown(frm);
         }
         if (frm.doc.name && !frm.is_new()) {
             renderRiskMatrixWrapper(frm);

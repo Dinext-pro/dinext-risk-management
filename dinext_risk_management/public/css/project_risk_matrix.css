@@ -60,3 +60,7 @@
         min-height: 140px;
     }
 }
+
+.row-check.col {
+    flex-grow: 0;
+}
