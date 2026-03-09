@@ -613,19 +613,9 @@ function bindRiskTabListenerOnce(frm) {
     frm._risk_tab_listener_bound = true;
 }
 
-/** Build sortable key for dimensions (matches backend dimensions_key). */
-function reserveDimensionsKey(dimensions) {
-    if (!dimensions || !dimensions.length) return '';
-    var parts = dimensions
-        .filter(function(d) { return d && d.doc; })
-        .map(function(d) { return d.doc + ':' + (d.docname || ''); })
-        .sort();
-    return parts.join('|');
-}
-
 /** Return true if dimensions arrays match (same doc:docname set). */
 function reserveDimensionsEqual(dim1, dim2) {
-    return reserveDimensionsKey(dim1) === reserveDimensionsKey(dim2);
+    return dimSignature(dim1) === dimSignature(dim2);
 }
 
 /** Check if account has Task dimension from aggregatedBudget (Accounting Dimension Filter data). */
@@ -729,6 +719,135 @@ function getReserveAmountsByPeriod(row, periods, aggregatedBudget, frm) {
         return periodAmountMap;
     }
     return periodAmountMap;
+}
+
+/**
+ * Simulated budget = deep copy via jQuery.extend; then add reserve amounts into matching buckets.
+ * Reuses get_child_budget_sum and clearBudgetIndexCacheFor from project_pl_calc.js.
+ */
+function applyReserveToSimulated(simulated, updates) {
+    if (!simulated || !updates || !updates.length) return;
+    for (var u = 0; u < updates.length; u++) {
+        var item = updates[u];
+        var account = (item.account || '').trim();
+        var dimensions = item.dimensions || [];
+        const taskId = dimensions.find(d => d && d.doc === "Task")?.docname;
+        const riskDim = dimensions.find(d => d && d.doc === "Project Risk")?.docname;
+        var periodAmountMap = item.period_amount_map || {};
+        var rowKey = getBudgetKey( account, taskId, riskDim );
+        var row = simulated[rowKey];
+        if (!row && riskDim) {
+            var parentKey = getBudgetKey( account, taskId );
+            var parent_row = simulated[parentKey];
+            if ( parent_row ) {
+                row = {
+                    ...parent_row,
+                    value: parent_row.value,
+                    indent: (parent_row.indent || 0) + 1,
+                    _parentKey: parentKey,
+                    risk: { value: riskDim },
+                    dimension_data: [{dimensions: dimensions}]
+                };
+                simulated[ getBudgetRowKey( row ) ] = row;
+            }
+        }
+        if (!row) continue;
+        var bucket = row.dimension_data.find(function(b) { return reserveDimensionsEqual(b.dimensions || [], dimensions); });
+        if (!bucket) continue;
+        for (var periodKey in periodAmountMap) {
+            if (!Object.prototype.hasOwnProperty.call(periodAmountMap, periodKey)) continue;
+            var amount = flt(periodAmountMap[periodKey], 2);
+            if (amount <= 0) continue;
+            var parts = (periodKey + '').split('_');
+            if (parts.length >= 2) {
+                var fk = 'forecast_' + parts[0] + '_' + parts[1];
+                bucket[fk] = flt((bucket[fk] || 0) + amount, 2);
+            }
+        }
+    }
+}
+
+/**
+ * Build parent_adjustments using get_parent_budget_limit and get_child_budget_sum from dinext_projects_pl.
+ * For each update and period, walks up via get_parent_budget_limit; when parent needs increase (non-zero and < sum of children),
+ * uses get_child_budget_sum for required value; stops when a non-zero parent needs no correction.
+ */
+function buildParentAdjustments(frm, updates) {
+    var parent_adjustments = [];
+    var adjusted_parents = [];
+    if (!frm.aggregatedBudget || !updates || !updates.length) return { parent_adjustments: parent_adjustments, adjusted_parents: adjusted_parents };
+    if (typeof get_parent_budget_limit !== 'function' || typeof get_child_budget_sum !== 'function') return { parent_adjustments: parent_adjustments, adjusted_parents: adjusted_parents };
+
+    var simulated = (typeof $ !== 'undefined' && $.extend) ? $.extend(true, {}, frm.aggregatedBudget) : JSON.parse(JSON.stringify(frm.aggregatedBudget));
+    applyReserveToSimulated(simulated, updates);
+    if (typeof clearBudgetIndexCacheFor === 'function') clearBudgetIndexCacheFor(simulated);
+
+    var allPeriods = [];
+    var periodKeys = {};
+    for (var u = 0; u < updates.length; u++) {
+        var pm = updates[u].period_amount_map || {};
+        for (var pk in pm) {
+            if (periodKeys[pk]) continue;
+            periodKeys[pk] = true;
+            var parts = (pk + '').split('_');
+            if (parts.length >= 2) allPeriods.push({ year: parseInt(parts[0], 10), month: parseInt(parts[1], 10) });
+        }
+    }
+    if (!allPeriods.length) return { parent_adjustments: parent_adjustments, adjusted_parents: adjusted_parents };
+
+    var adjustmentMap = {};
+    for (var ui = 0; ui < updates.length; ui++) {
+        var item = updates[ui];
+        var account = (item.account || '').trim();
+        var dimensions = item.dimensions || [];
+        var taskId = '';
+        var riskDocname = '';
+        for (var di = 0; di < dimensions.length; di++) {
+            if (dimensions[di] && dimensions[di].doc === 'Task') taskId = dimensions[di].docname || '';
+            if (dimensions[di] && dimensions[di].doc === 'Project Risk') riskDocname = dimensions[di].docname || '';
+        }
+        for (var pi = 0; pi < allPeriods.length; pi++) {
+            var period = allPeriods[pi];
+            var accountCur = account;
+            var taskIdCur = taskId;
+            var dimsCur = dimensions;
+            var riskCur = riskDocname || null;
+            var reverveValue = flt(item.period_amount_map[period.year + '_' + period.month]);
+            while (true) {
+                var limitResult = typeof get_parent_budget_limit === 'function'
+                    ? get_parent_budget_limit(accountCur, taskIdCur, dimsCur, period, simulated, riskCur)
+                    : null;
+                if (!limitResult) break;               
+                var simRow = simulated[ getBudgetRowKey( limitResult.parent ) ];
+                var parentForecast = 0;
+                var bucket = null;
+                if (simRow && simRow.dimension_data) {
+                    bucket = simRow.dimension_data.find(function(b) { return reserveDimensionsEqual(b.dimensions || [], limitResult.dim); });
+                    if (bucket) parentForecast = flt(bucket['forecast_' + period.year + '_' + period.month], 2);
+                }
+                let requiredValue = parentForecast + reverveValue - limitResult.maxAllowed;
+                if (parentForecast > 0 && parentForecast < requiredValue && bucket) {
+                    bucket['forecast_' + period.year + '_' + period.month] = flt(requiredValue, 2);
+                    if (typeof clearBudgetIndexCacheFor === 'function') clearBudgetIndexCacheFor(simulated);
+                    var adjKey = (limitResult.parent.value || '') + '|' + dimSignature(limitResult.dim);
+                    if (!adjustmentMap[adjKey]) {
+                        adjustmentMap[adjKey] = { account: limitResult.parent.value, dimensions: limitResult.dim, period_amount_map: {} };
+                        adjusted_parents.push({ account: limitResult.parent.value, dimensions: limitResult.dim });
+                    }
+                    adjustmentMap[adjKey].period_amount_map[period.year + '_' + period.month] = requiredValue;
+                }
+                if (parentForecast > 0 && parentForecast >= requiredValue) break;
+                accountCur = limitResult.parent.value;
+                taskIdCur = limitResult.parent.task ? limitResult.parent.task.value : '';
+                dimsCur = limitResult.dim;
+                riskCur = null;
+            }
+        }
+    }
+    for (var adjKey in adjustmentMap) {
+        if (Object.prototype.hasOwnProperty.call(adjustmentMap, adjKey)) parent_adjustments.push(adjustmentMap[adjKey]);
+    }
+    return { parent_adjustments: parent_adjustments, adjusted_parents: adjusted_parents };
 }
 
 /**
@@ -860,14 +979,17 @@ function openReserveRisksDialog(frm) {
                 frappe.msgprint(__('Нет данных для сохранения. Проверьте выбранные риски (статья начисления, период, величина).'));
                 return;
             }
+            var parentResult = buildParentAdjustments(frm, updates);
+            var parent_adjustments = parentResult.parent_adjustments || [];
             if (frappe.boot.developer_mode) {
-                console.log('reserve: calling bulk_save_reserve_budgets project=%s updates=%s', frm.doc.name, updates.length);
+                console.log('reserve: calling bulk_save_reserve_budgets project=%s updates=%s parent_adjustments=%s', frm.doc.name, updates.length, parent_adjustments.length);
             }
             frappe.call({
                 method: 'dinext_risk_management.dinext_risk_management.bulk_save_reserve_budgets',
                 args: {
                     project: frm.doc.name,
-                    updates: updates
+                    updates: updates,
+                    parent_adjustments: parent_adjustments
                 },
                 freeze: true,
                 freeze_message: __('Сохранение резерва...'),
@@ -880,6 +1002,14 @@ function openReserveRisksDialog(frm) {
                     var updated = (r.message && r.message.updated) || 0;
                     if (frappe.boot.developer_mode) console.log('reserve: bulk_save done updated=%s', updated);
                     frappe.show_alert({ message: __('Резерв рассчитан и добавлен в прогноз'), indicator: 'green' }, 5);
+                    if (parent_adjustments.length > 0) {
+                        var msg = __('Прогноз увеличен для следующих родительских статей до суммы дочерних: ') +
+                            parent_adjustments.map(function(a) { return (a.account || ''); }).join(', ');
+                        frappe.show_alert({ 
+                            message: msg,
+                            indicator:'yellow'
+                         }, 5);                        
+                    }
                     dialog.hide();
                     if (typeof load_budget_data === 'function') {
                         load_budget_data(frm, 'month', true);
