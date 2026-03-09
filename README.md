@@ -1,93 +1,163 @@
 # Dinext Risk Management
 
+## 📖 Overview
 
+**Dinext Risk Management** — приложение для Frappe/ERPNext, которое добавляет к проектам учёт рисков, визуализацию в виде матрицы рисков и учёт контингентных резервов в бюджете проекта.
 
-## Getting started
+В карточке проекта появляется вкладка «Риски»: таблица рисков (тема, описание, статус, категория, приоритет, влияние, вероятность, уровень, стратегия митигации, владелец, ответственный), интерактивная матрица «вероятность × влияние» с уровнями риска и круговые диаграммы по срезам. Для каждого риска можно включить контингентный резерв — указать учётную статью (P&L), периодичность начисления (месяц/квартал/год/проект/задача), метод расчёта (фиксированная сумма или процент от базы). Резервы записываются в документы Project Budget с учётом периодов и аналитик (в т.ч. Task). При установленном приложении Dinext Projects доступны периоды бюджета и пункт меню «Рассчитать прогноз» для массового сохранения резервов.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## ✨ Features
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+- **Управление рисками проекта** — таблица рисков с полями: тема, описание, статус (Open / In Progress / Realized / Closed), категория, приоритет, влияние, вероятность, уровень (вычисляемый), стратегия митигации, связь с задачей, владелец и ответственный (User / Contact / User Group).
+- **Матрица рисков** — интерактивная тепловая карта (Impact × Probability) с цветовыми уровнями риска, подсветкой выбранной ячейки и поддержкой светлой/тёмной темы.
+- **Круговые диаграммы** — распределение рисков по категории, статусу, приоритету, влиянию, вероятности, уровню, стратегии, владельцу, ответственному; фильтрация по выбранной ячейке матрицы и по срезу в donut.
+- **Контингентные резервы** — учётная статья (P&L), периодичность (месяц/квартал/год/проект/задача), метод расчёта (сумма или процент от выбранной базы); запись сумм по периодам в Project Budget.
+- **Массовое сохранение резервов** — API `bulk_save_reserve_budgets`: пакетное обновление/создание Project Budget по списку резервов и опциональным родительским корректировкам прогноза.
+- **Справочники** — Risk Category, Risk Priority, Risk Impact, Risk Probability, Risk Level, Risk Mitigation Strategy (поставляются через fixtures).
 
-## Add your files
+## 🚀 Installation
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+Убедитесь, что у вас есть [bench](https://github.com/frappe/bench) и настроенный сайт. Для полной функциональности периодов бюджета и пункта «Рассчитать прогноз» желательны приложения **Dinext Projects** и **Dinext Common** (ECharts).
+
+```bash
+cd $PATH_TO_YOUR_BENCH
+bench get-app $URL_OF_THIS_REPO --branch develop
+bench --site your_site.local install-app dinext_risk_management
+```
+
+При необходимости установите зависимые приложения (Dinext Projects, Dinext Common) до или после установки dinext_risk_management.
+
+## 🛠️ Usage
+
+1. Откройте карточку **Project** в Desk.
+2. Перейдите на вкладку **«Риски»**: сверху отображается матрица рисков (тепловая карта и круговой график), ниже — таблица рисков.
+3. **Добавление рисков**: в таблице укажите тему, описание, статус; при статусе отличном от Open заполните категорию, приоритет, влияние, вероятность (уровень подставится по справочнику), стратегию, владельца и ответственного.
+4. **Матрица**: клик по ячейке фильтрует строки таблицы по паре «вероятность × влияние»; выбор среза в выпадающем списке donut также фильтрует список рисков.
+5. **Контингентные резервы**: включите «Начислять резервы», укажите учётную статью начисления (P&L), периодичность, метод (Сумма или Процент) и при методе «Процент» — расчётную базу (счёт). При наличии Dinext Projects в меню формы появится пункт **«Рассчитать прогноз»** — после вызова откроется диалог с периодами и возможностью сохранить резервы в Project Budget.
+
+## 📦 Technologies
+
+- **Backend**: Python 3.10+, Frappe Framework
+- **Frontend**: JavaScript (клиентские скрипты формы Project), ECharts (динамическая загрузка из `dinext_common`)
+- **Данные**: DocType Project Risk (дочерняя таблица), справочники рисков; Custom Fields на Project (вкладка «Риски», матрица, таблица рисков); интеграция с Project Budget, Account, Task
+- **Инструменты**: ruff (lint/format), pre-commit (ruff, eslint, prettier, pyupgrade)
+
+## 🔧 Configuration
+
+Отдельного конфигурационного файла приложения в коде нет. Настройка ведётся в стандартном интерфейсе Frappe/ERPNext:
+
+- Справочники рисков (Risk Level, Risk Impact, Risk Probability и др.) настраиваются в соответствующих DocType; при миграции подтягиваются данные из fixtures.
+- Custom Fields и скрипты модуля Dinext Risk Management также экспортируются в fixtures и применяются при миграции.
+- Для доступа к определению DocType и скриптам может потребоваться включённый Developer Mode.
+
+## ✅ Requirements
+
+- **Frappe** (версия, совместимая с вашим bench)
+- **ERPNext** или среда, в которой есть DocType: Project, Project Budget, Account, Task
+- **Python** >= 3.10
+- Опционально: **Dinext Projects** (периоды бюджета, меню «Рассчитать прогноз»), **Dinext Common** (ECharts для матрицы и donut)
+- Для разработки: **pre-commit** (см. Contributing)
+
+## 🤝 Contributing
+
+Проект использует pre-commit для форматирования и проверки кода. Установите [pre-commit](https://pre-commit.com/#installation) и включите его в репозитории:
+
+```bash
+cd apps/dinext_risk_management
+pre-commit install
+```
+
+В pre-commit настроены: **ruff**, **eslint**, **prettier**, **pyupgrade**.
+
+## 📄 Documentation
+
+- [AGENTS.md](AGENTS.md) — руководство по разработке на Frappe в рамках приложения (DocTypes, MCP, фикстуры, контроллеры, клиентские скрипты).
+
+## ❤️ Acknowledgements
+
+- **Dinext** — издатель приложения
+- **Frappe Framework** и **ERPNext**
+- **Apache ECharts** — библиотека для матрицы рисков и круговых диаграмм
+
+## 📝 Changelog
+
+Краткая сводка изменений по истории коммитов:
+
+- **Инициализация и база**: Initial commit, Initialize App; добавление модуля Dinext Risk Management с DocTypes (Project Risk, Risk Category, Risk Priority, Risk Impact, Risk Probability, Risk Level, Risk Mitigation Strategy) и fixtures.
+- **Матрица рисков**: добавление и доработка UI матрицы рисков на форме Project (тепловая карта, расчёт контрастного цвета подписи, поддержка светлой/тёмной темы, адаптивная вёрстка, resize observer); донат-чарты с выбором типа (категория, статус, приоритет, влияние, вероятность, уровень, стратегия, владелец, ответственный), палитры цветов для light/dark; фильтрация по выбранной ячейке матрицы и по срезу donut; правки разметки, отступов и пустых подписей.
+- **Контингентные резервы**: поля резервов в Project Risk (учётная статья, периодичность, метод сумма/процент, база); диалог резервов и интеграция расчёта в форму проекта; логика периодов (месяц/квартал/год/проект/задача), использование `get_budget_display_periods` при наличии; рефакторинг функций расчёта резервов и массовое сохранение через API.
+- **Интеграция с бюджетом**: реализация `reserve_budget.py` (поиск/создание Project Budget по проекту, счёту и размерностям; добавление резервов и установка прогноза по периодам); whitelist `bulk_save_reserve_budgets` для пакетного сохранения с фронта; доработка обработки размерностей и пакетных обновлений.
+- **Прочее**: обновление JSON Project Risk (link filters, зависимости полей); условное отображение пункта меню «Рассчитать прогноз»; правки fixtures и визуализации; удаление неиспользуемого файла project_pl.js (chore).
+
+## 🗂️ Repository Structure
 
 ```
-cd existing_repo
-git remote add origin https://dinord.gitlab.yandexcloud.net/erpnext/dinext/dinext-risk-management.git
-git branch -M main
-git push -uf origin main
+dinext_risk_management/
+├── .cursor/skills/readme-writer/   # Skill для генерации README
+├── .editorconfig
+├── .eslintrc
+├── .pre-commit-config.yaml
+├── AGENTS.md                       # Руководство по разработке
+├── README.md
+├── license.txt
+├── pyproject.toml                  # Метаданные и зависимости Python, ruff
+├── dinext_risk_management/        # Корень приложения Frappe
+│   ├── __init__.py                # Версия приложения
+│   ├── hooks.py                    # Конфигурация: fixtures, doctype_js, app_include_css
+│   ├── modules.txt
+│   ├── patches.txt
+│   ├── config/                    # Конфигурация Desk
+│   ├── dinext_risk_management/    # Модуль приложения
+│   │   ├── __init__.py
+│   │   ├── reserve_budget.py       # API резервов, запись в Project Budget
+│   │   └── doctype/
+│   │       ├── project_risk/       # Дочерняя таблица рисков проекта
+│   │       ├── risk_category/
+│   │       ├── risk_priority/
+│   │       ├── risk_impact/
+│   │       ├── risk_probability/
+│   │       ├── risk_level/
+│   │       └── risk_mitigation_strategy/
+│   ├── fixtures/                  # Экспорт: справочники, custom_field, client/server script, role
+│   ├── public/
+│   │   ├── css/project_risk_matrix.css
+│   │   └── js/
+│   │       ├── project-risk.js     # Резервы, периоды, диалог «Рассчитать прогноз»
+│   │       └── project-risk-charts.js  # Матрица рисков и donut (ECharts)
+│   ├── templates/
+│   └── www/
 ```
 
-## Integrate with your tools
+- **dinext_risk_management/** — корневая папка приложения: `hooks.py` задаёт fixtures, подключение JS/CSS к форме Project и глобальные стили матрицы.
+- **dinext_risk_management/dinext_risk_management/** — Python-модуль: `reserve_budget.py` — расчёт и запись резервов в Project Budget, whitelist `bulk_save_reserve_budgets`; **doctype/** — DocType Project Risk (child table) и справочники рисков (JSON, контроллеры, тесты).
+- **fixtures/** — данные для миграции: справочники рисков, Custom Field (вкладка «Риски», матрица, таблица `custom_project_risks`), Client Script, Server Script, Role.
+- **public/js/** — клиентская логика формы Project: резервы по периодам и сохранение в бюджет (`project-risk.js`), матрица и donut с ECharts (`project-risk-charts.js`).
+- **public/css/** — стили блока матрицы рисков (сетка, панель donut, адаптивность).
 
-- [ ] [Set up project integrations](https://dinord.gitlab.yandexcloud.net/erpnext/dinext/dinext-risk-management/-/settings/integrations)
+## 🔗 Flow Chart
 
-## Collaborate with your team
+Взаимодействие компонентов при работе с рисками и резервами:
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+```mermaid
+flowchart TB
+  User[User] --> ProjectForm[Project Form]
+  ProjectForm --> RiskTable[custom_project_risks]
+  ProjectForm --> RiskCharts[project-risk-charts.js]
+  ProjectForm --> RiskReserves[project-risk.js]
+  RiskCharts --> ECharts[ECharts]
+  RiskCharts --> RiskLists[Risk Impact / Probability / Level]
+  RiskReserves --> BulkSave["bulk_save_reserve_budgets"]
+  BulkSave --> ReserveBudget[reserve_budget.py]
+  ReserveBudget --> ProjectBudget[Project Budget]
+  RiskTable --> ProjectRisk[Project Risk]
+  ReserveBudget --> FindBudget[find_project_budget]
+  FindBudget --> ProjectBudget
+```
 
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+- Пользователь работает с формой Project (вкладка «Риски»). Таблица рисков (`custom_project_risks`) и скрипты `project-risk-charts.js` / `project-risk.js` загружаются для этой формы.
+- Матрица и donut строятся по данным Risk Impact, Risk Probability, Risk Level и таблице рисков; ECharts подгружается динамически (dinext_common).
+- При сохранении резервов фронт вызывает `bulk_save_reserve_budgets`; серверный модуль `reserve_budget.py` находит или создаёт документы Project Budget (по проекту, счёту и размерностям) и записывает суммы по периодам.
 
 ## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+MIT
