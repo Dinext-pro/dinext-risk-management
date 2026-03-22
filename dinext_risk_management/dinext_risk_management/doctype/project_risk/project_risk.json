@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "autoincrement",
+ "autoname": "field:subject",
  "creation": "2026-01-25 16:53:42.805439",
  "description": "Project Risk",
  "doctype": "DocType",
@@ -40,7 +40,8 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "\u0420\u0438\u0441\u043a",
-   "reqd": 1
+   "reqd": 1,
+   "unique": 1
   },
   {
    "fieldname": "description",
@@ -228,11 +229,11 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-03-01 20:24:34.636991",
+ "modified": "2026-03-23 00:05:06.630409",
  "modified_by": "Administrator",
  "module": "Dinext Risk Management",
  "name": "Project Risk",
- "naming_rule": "Autoincrement",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",
