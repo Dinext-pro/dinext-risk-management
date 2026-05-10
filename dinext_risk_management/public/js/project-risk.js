@@ -300,6 +300,23 @@ function formatReserveMagnitude(row) {
     return '';
 }
 
+/** Native title on grid static cells so ellipsis-truncated text shows full value on hover. */
+function applyReserveRisksGridCellTitles(grid) {
+    if (!grid || !grid.grid_rows || !grid.grid_rows.length) return;
+    var fields = ['subject', 'reserve_account', 'reserve_period', 'magnitude'];
+    for (var i = 0; i < grid.grid_rows.length; i++) {
+        var grid_row = grid.grid_rows[i];
+        if (!grid_row || !grid_row.doc) continue;
+        for (var f = 0; f < fields.length; f++) {
+            var fieldname = fields[f];
+            var col = grid_row.columns[fieldname];
+            if (!col || !col.static_area || !col.static_area.length) continue;
+            var val = grid_row.doc[fieldname];
+            col.static_area.attr('title', val == null ? '' : String(val));
+        }
+    }
+}
+
 function openReserveRisksDialog(frm) {
     var eligible = getReserveRisksEligible(frm);
     if (!eligible.length) {
@@ -420,7 +437,17 @@ function openReserveRisksDialog(frm) {
             dialog.hide();
         }
     });
-    dialog.show();  
+    dialog.show();
+    var reserve_table = dialog.fields_dict.reserve_risks_table;
+    if (reserve_table && reserve_table.grid) {
+        var reserve_grid = reserve_table.grid;
+        reserve_grid.wrapper
+            .off('change.dinext_reserve_cell_title')
+            .on('change.dinext_reserve_cell_title', function() {
+                applyReserveRisksGridCellTitles(reserve_grid);
+            });
+        setTimeout(function() { applyReserveRisksGridCellTitles(reserve_grid); }, 0);
+    }
 }
 
 frappe.ui.form.on('Project', {
