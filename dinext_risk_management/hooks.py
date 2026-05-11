@@ -35,7 +35,7 @@ fixtures = [
     {
         "doctype": "Role",
         "filters": [
-            ["name", "in", ["Dinext Risk Management"]],
+            ["name", "in", ["Project Risk Admin"]],
             ["disabled", "=", 0]
         ]
     }
