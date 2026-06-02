@@ -60,7 +60,7 @@ def add_reserve_to_budget(project, account, dimensions, period_amount_map, compa
 	for row in doc.get("project_budget_amount") or []:
 		if row.pba_year is None:
 			continue
-		key = (row.pba_year, row.pba_month)
+		key = (int(row.pba_year), int(row.pba_month))
 		amount_map[key] = float(row.pba_expected or 0)
 		existing_plan[key] = row.pba_plan
 	for key, value in period_amount_map.items():
@@ -107,7 +107,7 @@ def set_forecast_in_budget(project, account, dimensions, period_amount_map, comp
 	for row in doc.get("project_budget_amount") or []:
 		if row.pba_year is None:
 			continue
-		key = (row.pba_year, row.pba_month)
+		key = (int(row.pba_year), int(row.pba_month))
 		amount_map[key] = float(row.pba_expected or 0)
 		existing_plan[key] = row.pba_plan
 	for key, value in period_amount_map.items():
