@@ -594,7 +594,7 @@ function bindRiskTabListenerOnce(frm) {
     if (frm._risk_tab_listener_bound) return;
     var $wrapper = frm.$wrapper || (frm.wrapper && $(frm.wrapper));
     if (!$wrapper || !$wrapper.length) return;
-    $wrapper.on('shown.bs.tab', '[data-fieldname="custom_риски"]', function() {
+    $wrapper.on('shown.bs.tab', '[data-fieldname="custom_risks"]', function() {
         if (frm._risk_matrix_chart) {
             setTimeout(function() {
                 if (frm._risk_matrix_chart) frm._risk_matrix_chart.resize();
