@@ -374,10 +374,14 @@ function openReserveRisksDialog(frm) {
                 frappe.msgprint(__('Выберите хотя бы один риск для расчёта.'));
                 return;
             }
+            // Reserve calc still needs frm.aggregatedBudget (Sticky-era cache).
+            // P&L v2 no longer fills it — adapter pl_v2→aggregatedBudget is follow-up.
             if (!frm.aggregatedBudget) {
                 frappe.msgprint({
                     title: __('Данные не загружены'),
-                    message: __('Проблема при загрузке данных P&L')
+                    message: __(
+                        'Не удалось рассчитать резервы: данные P&L в старом формате недоступны. Сохранение резервов временно недоступно после перехода на новую таблицу P&L.'
+                    )
                 });
                 return;
             }
