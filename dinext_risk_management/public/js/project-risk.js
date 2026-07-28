@@ -236,7 +236,7 @@ function applyReserveRisksGridCellTitles(grid) {
 function openReserveRisksDialog(frm) {
     var eligible = getReserveRisksEligible(frm);
     if (!eligible.length) {
-        frappe.msgprint(__('Нет актуальных рисков с начислением резерва.'));
+        frappe.msgprint(__('No active risks with reserve accrual.'));
         return;
     }
 
@@ -254,7 +254,7 @@ function openReserveRisksDialog(frm) {
     });
 
     var dialog = new frappe.ui.Dialog({
-        title: __('Включить резерв на риски'),
+        title: __('Include Risk Reserve'),
         size: 'large',
         fields: [
             {
@@ -266,11 +266,11 @@ function openReserveRisksDialog(frm) {
                 in_place_edit: true,
                 fields: [
                     { fieldname: 'idx', fieldtype: 'Int', label: __('№'), in_list_view: 1, read_only: 1, columns: 1 },
-                    { fieldname: 'subject', fieldtype: 'Data', label: __('Риск'), in_list_view: 1, read_only: 1, columns: 3 },
-                    { fieldname: 'reserve_account', fieldtype: 'Data', label: __('Статья начисления'), in_list_view: 1, read_only: 1, columns: 2 },
-                    { fieldname: 'reserve_period', fieldtype: 'Data', label: __('Период'), in_list_view: 1, read_only: 1, columns: 2 },
-                    //{ fieldname: 'reserve_method', fieldtype: 'Data', label: __('Метод'), in_list_view: 1, read_only: 1, columns: 1 },
-                    { fieldname: 'magnitude', fieldtype: 'Data', label: __('Величина'), in_list_view: 1, read_only: 1, columns: 2 },
+                    { fieldname: 'subject', fieldtype: 'Data', label: __('Risk'), in_list_view: 1, read_only: 1, columns: 3 },
+                    { fieldname: 'reserve_account', fieldtype: 'Data', label: __('Accrual Account'), in_list_view: 1, read_only: 1, columns: 2 },
+                    { fieldname: 'reserve_period', fieldtype: 'Data', label: __('Period'), in_list_view: 1, read_only: 1, columns: 2 },
+                    //{ fieldname: 'reserve_method', fieldtype: 'Data', label: __('Method'), in_list_view: 1, read_only: 1, columns: 1 },
+                    { fieldname: 'magnitude', fieldtype: 'Data', label: __('Amount'), in_list_view: 1, read_only: 1, columns: 2 },
                     { fieldname: '_source_index', fieldtype: 'Int', hidden: 1 }
                 ],
                 data: data
@@ -278,25 +278,25 @@ function openReserveRisksDialog(frm) {
             {                
                 fieldname: 'reserve_risks_description',
                 fieldtype: 'HTML',
-                options: __("При добавлении / обновлении резервов на риски возможно обновление родительских статей для соблюдения логики иерархичности значений"),
+                options: __("When adding / updating risk reserves, parent accounts may be updated to keep hierarchical value logic"),
             }
         ],
-        primary_action_label: __('Рассчитать'),
+        primary_action_label: __('Calculate'),
         primary_action: function() {
             var grid = dialog.fields_dict.reserve_risks_table && dialog.fields_dict.reserve_risks_table.grid;
             var selected = grid ? grid.get_selected_children() : [];
             var selected_source_names = selected.map(function(r) { return r.name; });
             if (!selected_source_names.length) {
-                frappe.msgprint(__('Выберите хотя бы один риск для расчёта.'));
+                frappe.msgprint(__('Select at least one risk for calculation.'));
                 return;
             }
-            frappe.dom.freeze(__('Загрузка данных P&L...'));
+            frappe.dom.freeze(__('Loading P&L data...'));
             ensureProjectBudgetForReserve(frm).then(function(ready) {
                 frappe.dom.unfreeze();
                 if (!ready) {
                     frappe.msgprint({
-                        title: __('Данные не загружены'),
-                        message: __('Откройте вкладку P&L и дождитесь загрузки таблицы, затем повторите расчёт резерва.')
+                        title: __('Data not loaded'),
+                        message: __('Open the P&L tab and wait for the table to load, then recalculate the reserve.')
                     });
                     return;
                 }
@@ -306,7 +306,7 @@ function openReserveRisksDialog(frm) {
                     console.log('reserve: selected=%s updates=%s skipped=%s', selected_source_names.length, updates.length, result.skipped);
                 }
                 if (!updates.length) {
-                    frappe.msgprint(__('Нет данных для сохранения. Проверьте выбранные риски (статья начисления, период, величина).'));
+                    frappe.msgprint(__('No data to save. Check selected risks (accrual account, period, amount).'));
                     return;
                 }
                 var parentResult = buildParentAdjustments(frm, updates);
@@ -322,15 +322,15 @@ function openReserveRisksDialog(frm) {
                         parent_adjustments: parent_adjustments
                     },
                     freeze: true,
-                    freeze_message: __('Сохранение резерва...'),
+                    freeze_message: __('Saving reserve...'),
                     callback: function(r) {
                         if (r.exc) {
-                            frappe.msgprint({ title: __('Ошибка'), message: r.exc && r.exc[0] ? r.exc[0] : __('Ошибка при сохранении резерва'), indicator: 'red' });
+                            frappe.msgprint({ title: __('Error'), message: r.exc && r.exc[0] ? r.exc[0] : __('Error saving reserve'), indicator: 'red' });
                             return;
                         }
-                        frappe.show_alert({ message: __('Резерв рассчитан и добавлен в прогноз'), indicator: 'green' }, 5);
+                        frappe.show_alert({ message: __('Reserve calculated and added to forecast'), indicator: 'green' }, 5);
                         if (parent_adjustments.length > 0) {
-                            var msg = __('Прогноз увеличен для следующих родительских статей до суммы дочерних: ') +
+                            var msg = __('Forecast increased for the following parent accounts to the sum of children: ') +
                                 parent_adjustments.map(function(a) { return (a.account || ''); }).join(', ');
                             frappe.show_alert({ message: msg, indicator: 'yellow' }, 5);
                         }
@@ -344,7 +344,7 @@ function openReserveRisksDialog(frm) {
                 });
             });
         },
-        secondary_action_label: __('Закрыть'),
+        secondary_action_label: __('Close'),
         secondary_action: function() {
             dialog.hide();
         }
@@ -372,7 +372,7 @@ frappe.ui.form.on('Project', {
         var has_reserve_risks = risks.some(function(r) { return r.contingency_reserve; });
         if (has_reserve_risks) {
             dinext_projects.project_budget_forecast_menu.push({
-                label: __("Включить резерв на риски"),
+                label: __("Include Risk Reserve"),
                 action: function(frm) { openReserveRisksDialog(frm); },
                 __dinext_risk_reserve_forecast: true
             });
