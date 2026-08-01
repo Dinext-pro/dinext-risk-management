@@ -159,13 +159,13 @@ def bulk_save_reserve_budgets(project, updates, parent_adjustments=None):
 		return {"message": "No project", "updated": 0}
 	if isinstance(updates, str):
 		updates = json.loads(updates) if updates else []
-	if not updates:
-		frappe.log("bulk_save_reserve_budgets: no updates")
-		return {"message": "No updates", "updated": 0}
 	if parent_adjustments is None:
 		parent_adjustments = []
 	if isinstance(parent_adjustments, str):
 		parent_adjustments = json.loads(parent_adjustments) if parent_adjustments else []
+	if not updates and not parent_adjustments:
+		frappe.log("bulk_save_reserve_budgets: no updates and no parent_adjustments")
+		return {"message": "No updates", "updated": 0}
 	frappe.log("bulk_save_reserve_budgets: start project=%s updates_count=%s parent_adjustments_count=%s"
 		% (project, len(updates), len(parent_adjustments)))
 	company = frappe.db.get_value("Project", project, "company") or frappe.defaults.get_default("company")

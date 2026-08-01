@@ -118,15 +118,15 @@ function buildMatrixDataFromRisks(risks, impacts, probabilities, levels) {
 }
 
 var DONUT_CHART_TYPES = [
-    { value: 'category', label: __('Категория') },
-    { value: 'status', label: __('Статус') },
-    { value: 'priority', label: __('Приоритет') },
-    { value: 'impact', label: __('Влияние') },
-    { value: 'probability', label: __('Вероятность') },
-    { value: 'level', label: __('Уровень') },
-    { value: 'strategy', label: __('Стратегия') },
-    { value: 'owner_person', label: __('Владелец') },
-    { value: 'responsible_person', label: __('Ответственный') }
+    { value: 'category', label: __('Category') },
+    { value: 'status', label: __('Status') },
+    { value: 'priority', label: __('Priority') },
+    { value: 'impact', label: __('Impact') },
+    { value: 'probability', label: __('Probability') },
+    { value: 'level', label: __('Level') },
+    { value: 'strategy', label: __('Strategy') },
+    { value: 'owner_person', label: __('Owner') },
+    { value: 'responsible_person', label: __('Responsible') }
 ];
 
 /** Muted but clearly colored palette for pie/donut — light theme */
@@ -141,7 +141,7 @@ var DONUT_CHART_COLORS_DARK = [
     '#6aba6a', '#7a7ac8', '#8ab068', '#7a8ac8', '#c89a6a'
 ];
 
-var EMPTY_LABEL = __('Не определено');
+var EMPTY_LABEL = __('Not Defined');
 
 function applyAllRiskFilters(frm) {
     var fd = frm.fields_dict['custom_project_risks'];
@@ -412,8 +412,8 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
                 var it = data && data[idx];
                 if (!it) return '';
                 return '<strong>' + (it.probability || '') + ' × ' + (it.impact || '') + '</strong><br/>' +
-                    (__('Уровень') + ': ' + (it.level || '-') + '<br/>') +
-                    (__('Количество рисков') + ': ' + (it.count || 0));
+                    (__('Level') + ': ' + (it.level || '-') + '<br/>') +
+                    (__('Number of Risks') + ': ' + (it.count || 0));
             }
         },
         grid: {
@@ -426,7 +426,7 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
         xAxis: {
             type: 'category',
             data: impacts.map(function(x) { return x.name; }),
-            name: __('Влияние'),
+            name: __('Impact'),
             nameLocation: 'middle',
             nameGap: 30,
             nameTextStyle: { fontSize: 12, color: axisTextColor },
@@ -437,7 +437,7 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
             {
                 type: 'category',
                 data: probabilities.map(function(x) { return x.name; }),
-                name: __('Вероятность'),
+                name: __('Probability'),
                 nameLocation: 'middle',
                 nameGap: 10,
                 nameTextStyle: { fontSize: 12, color: axisTextColor },
@@ -460,7 +460,7 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
             }
         ],
         series: [{
-            name: __('Риски'),
+            name: __('Risks'),
             type: 'heatmap',
             animation: false,
             data: data,
@@ -487,7 +487,7 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
             frm._risk_matrix_selected_cell = null;
         } else {
             frm._risk_matrix_selected_cell = { probability: it.probability, impact: it.impact };
-            //frappe.show_alert({ message: __('Отфильтровано по: Вероятность: {0} × Влияние: {1}', [it.probability, it.impact]), indicator: 'blue' }, 3);
+            //frappe.show_alert({ message: __('Filtered by: Probability: {0} × Impact: {1}', [it.probability, it.impact]), indicator: 'blue' }, 3);
         }
         applyAllRiskFilters(frm);
         applyMatrixSelectionHighlight(frm);
@@ -575,7 +575,7 @@ async function renderRiskMatrixWrapper(frm) {
         var dims = await loadRiskDimensions();
         if (!dims.impacts.length || !dims.probabilities.length) {
             field.$wrapper.find('.risk-matrix-row').remove();
-            field.$wrapper.append('<p class="text-muted">' + __('Нет настроенных уровней влияния или вероятности') + '</p>');
+            field.$wrapper.append('<p class="text-muted">' + __('No impact or probability levels configured') + '</p>');
             return;
         }
         frm._risk_matrix_dims = dims;
@@ -586,7 +586,7 @@ async function renderRiskMatrixWrapper(frm) {
     } catch (e) {
         console.error('Project Risk Matrix error:', e);
         field.$wrapper.find('.risk-matrix-row').remove();
-        field.$wrapper.append('<p class="text-danger">' + __('Ошибка загрузки матрицы рисков') + ': ' + (e.message || e) + '</p>');
+        field.$wrapper.append('<p class="text-danger">' + __('Error loading risk matrix') + ': ' + (e.message || e) + '</p>');
     }
 }
 
