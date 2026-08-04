@@ -39,14 +39,14 @@
    "in_list_view": 1,
    "in_preview": 1,
    "in_standard_filter": 1,
-   "label": "\u0420\u0438\u0441\u043a",
+   "label": "Risk",
    "reqd": 1,
    "unique": 1
   },
   {
    "fieldname": "description",
    "fieldtype": "Text",
-   "label": "\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435"
+   "label": "Description"
   },
   {
    "columns": 1,
@@ -65,7 +65,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "\u041a\u0430\u0442\u0435\u0433\u043e\u0440\u0438\u044f",
+   "label": "Category",
    "link_filters": "[[\"Risk Category\",\"enabled\",\"=\",1]]",
    "mandatory_depends_on": "eval:doc.status != 'Open'",
    "options": "Risk Category"
@@ -76,7 +76,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "\u041f\u0440\u0438\u043e\u0440\u0438\u0442\u0435\u0442",
+   "label": "Priority",
    "link_filters": "[[\"Risk Priority\",\"enabled\",\"=\",1]]",
    "mandatory_depends_on": "eval:doc.status != 'Open'",
    "options": "Risk Priority"
@@ -87,7 +87,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "\u0412\u043b\u0438\u044f\u043d\u0438\u0435",
+   "label": "Impact",
    "link_filters": "[[\"Risk Impact\",\"enabled\",\"=\",1]]",
    "mandatory_depends_on": "eval:doc.status != 'Open'",
    "options": "Risk Impact"
@@ -98,7 +98,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "\u0412\u0435\u0440\u043e\u044f\u0442\u043d\u043e\u0441\u0442\u044c",
+   "label": "Probability",
    "link_filters": "[[\"Risk Probability\",\"enabled\",\"=\",1]]",
    "mandatory_depends_on": "eval:doc.status != 'Open'",
    "options": "Risk Probability"
@@ -109,7 +109,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "\u0423\u0440\u043e\u0432\u0435\u043d\u044c",
+   "label": "Level",
    "link_filters": "[[\"Risk Level\",\"enabled\",\"=\",1]]",
    "options": "Risk Level",
    "read_only": 1
@@ -120,7 +120,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "\u0421\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u044f",
+   "label": "Strategy",
    "link_filters": "[[\"Risk Mitigation Strategy\",\"enabled\",\"=\",1]]",
    "mandatory_depends_on": "eval:doc.status != 'Open'",
    "options": "Risk Mitigation Strategy"
@@ -128,7 +128,7 @@
   {
    "fieldname": "task",
    "fieldtype": "Link",
-   "label": "\u0417\u0430\u0434\u0430\u0447\u0430",
+   "label": "Task",
    "link_filters": "[[\"Task\",\"project\",\"=\",\"eval:parent.name\"]]",
    "options": "Task"
   },
@@ -136,14 +136,14 @@
    "default": "Contact",
    "fieldname": "owner_link_doctype",
    "fieldtype": "Select",
-   "label": "\u0422\u0438\u043f \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430 \u0440\u0438\u0441\u043a\u0430",
+   "label": "Risk Owner Type",
    "mandatory_depends_on": "eval:doc.status != 'Open'",
    "options": "User\nContact"
   },
   {
    "fieldname": "owner_person",
    "fieldtype": "Dynamic Link",
-   "label": "\u0412\u043b\u0430\u0434\u0435\u043b\u0435\u0446 \u0440\u0438\u0441\u043a\u0430",
+   "label": "Risk Owner",
    "mandatory_depends_on": "eval:doc.status != 'Open'",
    "options": "owner_link_doctype"
   },
@@ -151,77 +151,77 @@
    "default": "Contact",
    "fieldname": "responsible_link_doctype",
    "fieldtype": "Select",
-   "label": "\u0422\u0438\u043f \u043e\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u0433\u043e",
+   "label": "Responsible Type",
    "mandatory_depends_on": "eval:doc.status != 'Open'",
    "options": "User\nUser Group\nContact"
   },
   {
    "fieldname": "responsible_person",
    "fieldtype": "Dynamic Link",
-   "label": "\u041e\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0435\u043d\u043d\u044b\u0439",
+   "label": "Responsible",
    "mandatory_depends_on": "eval:doc.status != 'Open'",
    "options": "responsible_link_doctype"
   },
   {
    "fieldname": "reserve_section",
    "fieldtype": "Section Break",
-   "label": "\u0420\u0435\u0437\u0435\u0440\u0432\u044b \u043d\u0430 \u0440\u0438\u0441\u043a"
+   "label": "Risk Reserves"
   },
   {
    "default": "0",
    "fieldname": "contingency_reserve",
    "fieldtype": "Check",
-   "label": "\u041d\u0430\u0447\u0438\u0441\u043b\u044f\u0442\u044c \u0440\u0435\u0437\u0435\u0440\u0432\u044b"
+   "label": "Accrue Reserves"
   },
   {
    "depends_on": "eval:doc.contingency_reserve",
    "fieldname": "reserve_account",
    "fieldtype": "Link",
-   "label": "\u0423\u0447\u0451\u0442\u043d\u0430\u044f \u0441\u0442\u0430\u0442\u044c\u044f \u043d\u0430\u0447\u0438\u0441\u043b\u0435\u043d\u0438\u044f (P&L)",
+   "label": "Accrual Account (P&L)",
    "link_filters": "[[\"Account\",\"disabled\",\"=\",0],[\"Account\",\"report_type\",\"=\",\"Profit and Loss\"],[\"Account\",\"company\",\"=\",\"eval:parent.company\"]]",
    "mandatory_depends_on": "eval:doc.contingency_reserve",
    "options": "Account"
   },
   {
    "depends_on": "eval:doc.contingency_reserve",
-   "description": "\u0412 \u043f\u043e\u0441\u043b\u0435\u0434\u043d\u0438\u0439 \u0434\u0435\u043d\u044c \u043f\u0435\u0440\u0438\u043e\u0434\u0430",
+   "description": "В последний день периода",
    "fieldname": "reserve_period",
    "fieldtype": "Select",
-   "label": "\u041f\u0435\u0440\u0438\u043e\u0434\u0438\u0447\u043d\u043e\u0441\u0442\u044c \u043d\u0430\u0447\u0438\u0441\u043b\u0435\u043d\u0438\u044f",
+   "label": "Accrual Periodicity",
    "mandatory_depends_on": "eval:doc.contingency_reserve",
-   "options": "\u041c\u0435\u0441\u044f\u0446\n\u041a\u0432\u0430\u0440\u0442\u0430\u043b\n\u0413\u043e\u0434\n\u041f\u0440\u043e\u0435\u043a\u0442 / \u0417\u0430\u0434\u0430\u0447\u0430"
+   "options": "Месяц\nКвартал\nГод\nПроект / Задача"
   },
   {
    "depends_on": "eval:doc.contingency_reserve",
    "fieldname": "reserve_method",
    "fieldtype": "Select",
-   "label": "\u041c\u0435\u0442\u043e\u0434 \u0440\u0430\u0441\u0447\u0451\u0442\u0430 \u0440\u0435\u0437\u0435\u0440\u0432\u0430",
+   "label": "Reserve Calculation Method",
    "mandatory_depends_on": "eval:doc.contingency_reserve",
-   "options": "\u0421\u0443\u043c\u043c\u0430\n\u041f\u0440\u043e\u0446\u0435\u043d\u0442"
+   "options": "Сумма\nПроцент"
   },
   {
-   "depends_on": "eval:doc.contingency_reserve && doc.reserve_method == '\u0421\u0443\u043c\u043c\u0430'",
+   "depends_on": "eval:doc.contingency_reserve && doc.reserve_method == 'Сумма'",
    "fieldname": "reserve_amount",
    "fieldtype": "Currency",
-   "label": "\u0421\u0443\u043c\u043c\u0430 \u0440\u0435\u0437\u0435\u0440\u0432\u0430",
-   "mandatory_depends_on": "eval:doc.contingency_reserve && doc.reserve_method == '\u0421\u0443\u043c\u043c\u0430'",
+   "label": "Reserve Amount",
+   "mandatory_depends_on": "eval:doc.contingency_reserve && doc.reserve_method == 'Сумма'",
    "precision": "2"
   },
   {
-   "depends_on": "eval:doc.contingency_reserve && doc.reserve_method == '\u041f\u0440\u043e\u0446\u0435\u043d\u0442'",
+   "depends_on": "eval:doc.contingency_reserve && doc.reserve_method == 'Процент'",
    "fieldname": "reserve_percent",
    "fieldtype": "Percent",
-   "label": "\u041f\u0440\u043e\u0446\u0435\u043d\u0442",
-   "mandatory_depends_on": "eval:doc.contingency_reserve && doc.reserve_method == '\u041f\u0440\u043e\u0446\u0435\u043d\u0442'",
+   "label": "Percent",
+   "mandatory_depends_on": "eval:doc.contingency_reserve && doc.reserve_method == 'Процент'",
    "precision": "2"
   },
   {
-   "depends_on": "eval:doc.contingency_reserve && doc.reserve_method == '\u041f\u0440\u043e\u0446\u0435\u043d\u0442'",
+   "depends_on": "eval:doc.contingency_reserve && doc.reserve_method == 'Процент'",
    "fieldname": "reserve_basis_account",
    "fieldtype": "Link",
-   "label": "\u0420\u0430\u0441\u0447\u0451\u0442\u043d\u0430\u044f \u0431\u0430\u0437\u0430",
+   "label": "Calculation Base",
    "link_filters": "[[\"Account\",\"disabled\",\"=\",0],[\"Account\",\"report_type\",\"=\",\"Profit and Loss\"],[\"Account\",\"company\",\"=\",\"eval:parent.company\"]]",
-   "mandatory_depends_on": "eval:doc.contingency_reserve && doc.reserve_method == '\u041f\u0440\u043e\u0446\u0435\u043d\u0442'",
+   "mandatory_depends_on": "eval:doc.contingency_reserve && doc.reserve_method == 'Процент'",
    "options": "Account"
   }
  ],
