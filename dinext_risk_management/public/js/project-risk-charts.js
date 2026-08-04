@@ -487,7 +487,7 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
             frm._risk_matrix_selected_cell = null;
         } else {
             frm._risk_matrix_selected_cell = { probability: it.probability, impact: it.impact };
-            //frappe.show_alert({ message: __('Отфильтровано по: Вероятность: {0} × Влияние: {1}', [it.probability, it.impact]), indicator: 'blue' }, 3);
+            //frappe.show_alert({ message: __('Filtered by: Probability: {0} × Impact: {1}', [it.probability, it.impact]), indicator: 'blue' }, 3);
         }
         applyAllRiskFilters(frm);
         applyMatrixSelectionHighlight(frm);
