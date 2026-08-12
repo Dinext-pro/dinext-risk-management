@@ -33,3 +33,6 @@
 "Status","Статус",""
 "Strategy","Стратегия",""
 "When adding / updating risk reserves, parent accounts may be updated to keep hierarchical value logic","При добавлении / обновлении резервов на риски возможно обновление родительских статей для соблюдения логики иерархичности значений",""
+"Scope & Governance","Содержание и управление",""
+"Project Risk","Риск проекта",""
+"Tracks risk category, impact, probability, response strategy, ownership, and financial reserves.","Отслеживает категорию риска, влияние, вероятность, стратегию реагирования, владельца и финансовые резервы.",""
