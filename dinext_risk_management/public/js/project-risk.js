@@ -1,7 +1,33 @@
-// Ensure "Рассчитать прогноз" menu array exists for Dinext Projects (used in refresh to add our item conditionally)
+// Forecast menu: new PL uses project_budget_*; develop PL uses project_pl_*.
+// Share one array + refresh helper so demodev can keep old P&L during phased cutover.
+frappe.provide("dinext_projects");
+frappe.provide("dinext_projects.project_pl_forecast_menu");
 frappe.provide("dinext_projects.project_budget_forecast_menu");
-if (!Array.isArray(dinext_projects.project_budget_forecast_menu)) {
-    dinext_projects.project_budget_forecast_menu = [];
+if (!Array.isArray(dinext_projects.project_pl_forecast_menu)) {
+	dinext_projects.project_pl_forecast_menu = [];
+}
+if (
+	!Array.isArray(dinext_projects.project_budget_forecast_menu) ||
+	dinext_projects.project_budget_forecast_menu !== dinext_projects.project_pl_forecast_menu
+) {
+	// Prefer whatever already has items; otherwise share PL develop array.
+	if (
+		Array.isArray(dinext_projects.project_budget_forecast_menu) &&
+		dinext_projects.project_budget_forecast_menu.length &&
+		!dinext_projects.project_pl_forecast_menu.length
+	) {
+		dinext_projects.project_pl_forecast_menu = dinext_projects.project_budget_forecast_menu;
+	}
+	dinext_projects.project_budget_forecast_menu = dinext_projects.project_pl_forecast_menu;
+}
+
+function refreshProjectForecastDropdown(frm) {
+	const fn =
+		dinext_projects.refresh_project_budget_forecast_dropdown ||
+		dinext_projects.refresh_pl_forecast_dropdown;
+	if (typeof fn === "function") {
+		fn(frm);
+	}
 }
 
 /** Ensure Project Budget grid is loaded (ProjectBudget). */
@@ -365,9 +391,11 @@ function openReserveRisksDialog(frm) {
 frappe.ui.form.on('Project', {
     refresh: function(frm) {
         // Show "Включить резерв на риски" in "Рассчитать прогноз" menu only when project has risks with reserve
-        dinext_projects.project_budget_forecast_menu = dinext_projects.project_budget_forecast_menu.filter(function(item) {
-            return !item.__dinext_risk_reserve_forecast;
-        });
+        // Keep both menu aliases on the same array (see top of file).
+        dinext_projects.project_budget_forecast_menu = dinext_projects.project_pl_forecast_menu =
+            (dinext_projects.project_pl_forecast_menu || []).filter(function(item) {
+                return !item.__dinext_risk_reserve_forecast;
+            });
         var risks = frm.doc.custom_project_risks || [];
         var has_reserve_risks = risks.some(function(r) { return r.contingency_reserve; });
         if (has_reserve_risks) {
@@ -376,8 +404,9 @@ frappe.ui.form.on('Project', {
                 action: function(frm) { openReserveRisksDialog(frm); },
                 __dinext_risk_reserve_forecast: true
             });
-            dinext_projects.refresh_project_budget_forecast_dropdown(frm);
         }
+        // Always refresh: remove stale risk item when project has no reserve risks.
+        refreshProjectForecastDropdown(frm);
         if (frm.doc.name && !frm.is_new()) {
             renderRiskMatrixWrapper(frm);
             bindRiskTabListenerOnce(frm);
