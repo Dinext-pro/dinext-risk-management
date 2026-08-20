@@ -404,8 +404,9 @@ frappe.ui.form.on('Project', {
                 action: function(frm) { openReserveRisksDialog(frm); },
                 __dinext_risk_reserve_forecast: true
             });
-            refreshProjectForecastDropdown(frm);
         }
+        // Always refresh: remove stale risk item when project has no reserve risks.
+        refreshProjectForecastDropdown(frm);
         if (frm.doc.name && !frm.is_new()) {
             renderRiskMatrixWrapper(frm);
             bindRiskTabListenerOnce(frm);
