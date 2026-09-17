@@ -143,6 +143,10 @@ var DONUT_CHART_COLORS_DARK = [
 
 var EMPTY_LABEL = __('Not Defined');
 
+function translateRiskName(name) {
+    return name ? __(String(name)) : name;
+}
+
 function applyAllRiskFilters(frm) {
     var fd = frm.fields_dict['custom_project_risks'];
     if (!fd || !fd.grid || !fd.grid.grid_rows) return;
@@ -275,7 +279,7 @@ function buildDonutOption(frm, data, selectedValue) {
             trigger: 'item',
             formatter: function(params) {
                 var p = params;
-                return (p.name || '') + ': ' + (p.value || 0) + ' (' + (p.percent || 0).toFixed(1) + '%)';
+                return translateRiskName(p.name || '') + ': ' + (p.value || 0) + ' (' + (p.percent || 0).toFixed(1) + '%)';
             }
         },
         labelLayout: {
@@ -299,7 +303,7 @@ function buildDonutOption(frm, data, selectedValue) {
             label: {
                 color: textColor,
                 formatter: function(params) {
-                    var n = params.name;
+                    var n = translateRiskName(params.name);
                     if (n && n.length > 22) n = n.slice(0, 20) + '…';
                     return (n || '') + '\n' + (params.value || 0);
                 }
@@ -411,8 +415,8 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
                 var data = frm._risk_matrix_data;
                 var it = data && data[idx];
                 if (!it) return '';
-                return '<strong>' + (it.probability || '') + ' × ' + (it.impact || '') + '</strong><br/>' +
-                    (__('Level') + ': ' + (it.level || '-') + '<br/>') +
+                return '<strong>' + translateRiskName(it.probability || '') + ' × ' + translateRiskName(it.impact || '') + '</strong><br/>' +
+                    (__('Level') + ': ' + translateRiskName(it.level || '-') + '<br/>') +
                     (__('Number of Risks') + ': ' + (it.count || 0));
             }
         },
@@ -430,7 +434,7 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
             nameLocation: 'middle',
             nameGap: 30,
             nameTextStyle: { fontSize: 12, color: axisTextColor },
-            axisLabel: { fontSize: 10, color: axisTextColor, interval: 0, margin: 10 },
+            axisLabel: { fontSize: 10, color: axisTextColor, interval: 0, margin: 10, formatter: function(value) { return translateRiskName(value); } },
             splitArea: { show: true }
         },
         yAxis: [
@@ -454,7 +458,7 @@ function renderRiskMatrix(frm, matrixData, impacts, probabilities) {
                 nameTextStyle: { fontSize: 12, color: axisTextColor },
                 axisLine: { show: false },
                 axisTick: { show: false },
-                axisLabel: { show: true, fontSize: 11, color: axisTextColor, margin: 10 },
+                axisLabel: { show: true, fontSize: 11, color: axisTextColor, margin: 10, formatter: function(value) { return translateRiskName(value); } },
                 splitLine: { show: false },
                 splitArea: { show: false }
             }
