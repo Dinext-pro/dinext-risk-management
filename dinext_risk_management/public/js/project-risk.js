@@ -246,7 +246,7 @@ function openReserveRisksDialog(frm) {
             idx: i + 1,
             subject: item.row.subject || '',
             reserve_account: item.row.reserve_account || '',
-            reserve_period: item.row.reserve_period || '',
+            reserve_period: item.row.reserve_period ? __(item.row.reserve_period) : '',
             reserve_method: item.row.reserve_method || '',
             magnitude: formatReserveMagnitude(item.row),
             _source_index: item.index
@@ -362,8 +362,34 @@ function openReserveRisksDialog(frm) {
     }
 }
 
+var RISK_TRANSLATED_LINK_FIELDS = {
+    category: 'Risk Category',
+    priority: 'Risk Priority',
+    impact: 'Risk Impact',
+    probability: 'Risk Probability',
+    level: 'Risk Level',
+    strategy: 'Risk Mitigation Strategy'
+};
+
+function applyProjectRiskLinkFormatters() {
+    if (window._dinext_risk_link_fmt) return;
+    Object.keys(RISK_TRANSLATED_LINK_FIELDS).forEach(function(fieldname) {
+        var df = frappe.meta.get_docfield('Project Risk', fieldname);
+        if (!df) return;
+        var dt = RISK_TRANSLATED_LINK_FIELDS[fieldname];
+        df.formatter = function(value) {
+            if (!value) return '';
+            var label = frappe.utils.escape_html(__(String(value)));
+            var route = '/app/' + frappe.router.slug(dt) + '/' + encodeURIComponent(value);
+            return '<a href="' + route + '">' + label + '</a>';
+        };
+    });
+    window._dinext_risk_link_fmt = true;
+}
+
 frappe.ui.form.on('Project', {
     refresh: function(frm) {
+        applyProjectRiskLinkFormatters();
         // Show "Включить резерв на риски" in "Рассчитать прогноз" menu only when project has risks with reserve
         dinext_projects.project_budget_forecast_menu = dinext_projects.project_budget_forecast_menu.filter(function(item) {
             return !item.__dinext_risk_reserve_forecast;
