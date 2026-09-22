@@ -44,7 +44,7 @@ fixtures = [
 # Apps
 # ------------------
 
-# required_apps = []
+required_apps = ["dinext_common", "doctype_permission", "dinext_projects"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
@@ -124,7 +124,8 @@ doctype_js = {"Project" :
 # ------------
 
 # before_install = "dinext_risk_management.install.before_install"
-# after_install = "dinext_risk_management.install.after_install"
+after_install = "dinext_risk_management.install.after_install"
+after_migrate = "dinext_risk_management.install.after_migrate"
 
 # Uninstallation
 # ------------
