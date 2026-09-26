@@ -160,4 +160,4 @@ flowchart TB
 
 ## License
 
-MIT
+GNU GPL v3. Текст — в [license.txt](license.txt).
