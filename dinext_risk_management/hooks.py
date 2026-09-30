@@ -3,7 +3,7 @@ app_title = "Dinext Risk Management"
 app_publisher = "Dinext"
 app_description = "Dinext Project Risk Management"
 app_email = "info@dinext.ru"
-app_license = "mit"
+app_license = "GNU General Public License (v3)"
 
 fixtures = [
     "Risk Mitigation Strategy", 
@@ -22,14 +22,12 @@ fixtures = [
         "doctype": "Client Script",
         "filters": [
             ["module", "in", ["Dinext Risk Management"]],
-            ["enabled", "=", 1]
         ]
     },
     {
         "doctype": "Server Script",
         "filters": [
             ["module", "in", ["Dinext Risk Management"]],
-            ["disabled", "=", 0]
         ]
     },
     {
