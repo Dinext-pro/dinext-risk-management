@@ -22,14 +22,12 @@ fixtures = [
         "doctype": "Client Script",
         "filters": [
             ["module", "in", ["Dinext Risk Management"]],
-            ["enabled", "=", 1]
         ]
     },
     {
         "doctype": "Server Script",
         "filters": [
             ["module", "in", ["Dinext Risk Management"]],
-            ["disabled", "=", 0]
         ]
     },
     {
