@@ -1,0 +1,8 @@
+{
+  "app": "dinext_risk_management",
+  "package_dir": "dinext_risk_management",
+  "mode": "frappe-app",
+  "gitflow": true,
+  "frontend_tests": false,
+  "skip_test_records": true
+}
