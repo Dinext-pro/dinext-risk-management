@@ -1,23 +1,25 @@
+[Русский](README.ru.md)
+
 # Dinext Risk Management
 
 ## 📖 Overview
 
-**Dinext Risk Management** — приложение для Frappe/ERPNext, которое добавляет к проектам учёт рисков, визуализацию в виде матрицы рисков и учёт контингентных резервов в бюджете проекта.
+**Dinext Risk Management** is a Frappe/ERPNext application that adds project risk tracking, risk matrix visualization and contingency reserve accounting in the project budget.
 
-В карточке проекта появляется вкладка «Риски»: таблица рисков (тема, описание, статус, категория, приоритет, влияние, вероятность, уровень, стратегия митигации, владелец, ответственный), интерактивная матрица «вероятность × влияние» с уровнями риска и круговые диаграммы по срезам. Для каждого риска можно включить контингентный резерв — указать учётную статью (P&L), периодичность начисления (месяц/квартал/год/проект/задача), метод расчёта (фиксированная сумма или процент от базы). Резервы записываются в документы Project Budget с учётом периодов и аналитик (в т.ч. Task). При установленном приложении Dinext Projects доступны периоды бюджета и пункт меню «Рассчитать прогноз» для массового сохранения резервов.
+The project form gains a Risks tab: a risk table (subject, description, status, category, priority, impact, probability, level, mitigation strategy, owner, responsible party), an interactive probability × impact matrix with risk levels, and pie charts by dimension. A contingency reserve can be enabled for each risk by specifying the accounting item (P&L), accrual frequency (month/quarter/year/project/task), and calculation method (fixed amount or percentage of a base). Reserves are recorded in Project Budget documents with periods and dimensions (including Task). When Dinext Projects is installed, budget periods and the Calculate Forecast menu item are available for saving reserves in bulk.
 
 ## ✨ Features
 
-- **Управление рисками проекта** — таблица рисков с полями: тема, описание, статус (Open / In Progress / Realized / Closed), категория, приоритет, влияние, вероятность, уровень (вычисляемый), стратегия митигации, связь с задачей, владелец и ответственный (User / Contact / User Group).
-- **Матрица рисков** — интерактивная тепловая карта (Impact × Probability) с цветовыми уровнями риска, подсветкой выбранной ячейки и поддержкой светлой/тёмной темы.
-- **Круговые диаграммы** — распределение рисков по категории, статусу, приоритету, влиянию, вероятности, уровню, стратегии, владельцу, ответственному; фильтрация по выбранной ячейке матрицы и по срезу в donut.
-- **Контингентные резервы** — учётная статья (P&L), периодичность (месяц/квартал/год/проект/задача), метод расчёта (сумма или процент от выбранной базы); запись сумм по периодам в Project Budget.
-- **Массовое сохранение резервов** — API `bulk_save_reserve_budgets`: пакетное обновление/создание Project Budget по списку резервов и опциональным родительским корректировкам прогноза.
-- **Справочники** — Risk Category, Risk Priority, Risk Impact, Risk Probability, Risk Level, Risk Mitigation Strategy (поставляются через fixtures).
+- **Project risk management** — a risk table with the following fields: subject, description, status (Open / In Progress / Realized / Closed), category, priority, impact, probability, level (calculated), mitigation strategy, task link, owner and responsible party (User / Contact / User Group).
+- **Risk matrix** — an interactive heatmap (Impact × Probability) with color-coded risk levels, highlighting of the selected cell, and light/dark theme support.
+- **Pie charts** — risk distribution by category, status, priority, impact, probability, level, strategy, owner and responsible party; filtering by the selected matrix cell and donut segment.
+- **Contingency reserves** — accounting item (P&L), frequency (month/quarter/year/project/task), calculation method (amount or percentage of a selected base); recording amounts by period in Project Budget.
+- **Bulk reserve saving** — the `bulk_save_reserve_budgets` API: batch updating/creating Project Budget records from a list of reserves and optional parent forecast adjustments.
+- **Reference data** — Risk Category, Risk Priority, Risk Impact, Risk Probability, Risk Level, Risk Mitigation Strategy (supplied through fixtures).
 
 ## 🚀 Installation
 
-Убедитесь, что у вас есть [bench](https://github.com/frappe/bench) и настроенный сайт. Для полной функциональности периодов бюджета и пункта «Рассчитать прогноз» желательны приложения **Dinext Projects** и **Dinext Common** (ECharts).
+Make sure you have [bench](https://github.com/frappe/bench) and a configured site. **Dinext Projects** and **Dinext Common** (ECharts) are recommended for full budget period and Calculate Forecast functionality.
 
 ```bash
 cd $PATH_TO_YOUR_BENCH
@@ -25,118 +27,112 @@ bench get-app $URL_OF_THIS_REPO --branch develop
 bench --site your_site.local install-app dinext_risk_management
 ```
 
-При необходимости установите зависимые приложения (Dinext Projects, Dinext Common) до или после установки dinext_risk_management.
+If necessary, install the dependent applications (Dinext Projects, Dinext Common) before or after installing dinext_risk_management.
 
 ## 🛠️ Usage
 
-1. Откройте карточку **Project** в Desk.
-2. Перейдите на вкладку **«Риски»**: сверху отображается матрица рисков (тепловая карта и круговой график), ниже — таблица рисков.
-3. **Добавление рисков**: в таблице укажите тему, описание, статус; при статусе отличном от Open заполните категорию, приоритет, влияние, вероятность (уровень подставится по справочнику), стратегию, владельца и ответственного.
-4. **Матрица**: клик по ячейке фильтрует строки таблицы по паре «вероятность × влияние»; выбор среза в выпадающем списке donut также фильтрует список рисков.
-5. **Контингентные резервы**: включите «Начислять резервы», укажите учётную статью начисления (P&L), периодичность, метод (Сумма или Процент) и при методе «Процент» — расчётную базу (счёт). При наличии Dinext Projects в меню формы появится пункт **«Рассчитать прогноз»** — после вызова откроется диалог с периодами и возможностью сохранить резервы в Project Budget.
+1. Open a **Project** form in Desk.
+2. Go to the **Risks** tab: the risk matrix (heatmap and pie chart) appears at the top, with the risk table below.
+3. **Adding risks**: enter a subject, description and status in the table; for any status other than Open, fill in the category, priority, impact, probability (the level is populated from reference data), strategy, owner and responsible party.
+4. **Matrix**: clicking a cell filters table rows by the probability × impact pair; choosing a segment in the donut dropdown also filters the risk list.
+5. **Contingency reserves**: enable Accrue Reserves, specify the accrual accounting item (P&L), frequency and method (Amount or Percentage); for Percentage, specify the calculation base (account). When Dinext Projects is available, the form menu includes **Calculate Forecast**: selecting it opens a dialog with periods and an option to save reserves in Project Budget.
 
 ## 📦 Technologies
 
 - **Backend**: Python 3.10+, Frappe Framework
-- **Frontend**: JavaScript (клиентские скрипты формы Project), ECharts (динамическая загрузка из `dinext_common`)
-- **Данные**: DocType Project Risk (дочерняя таблица), справочники рисков; Custom Fields на Project (вкладка «Риски», матрица, таблица рисков); интеграция с Project Budget, Account, Task
-- **Инструменты**: ruff (lint/format), pre-commit (ruff, eslint, prettier, pyupgrade)
+- **Frontend**: JavaScript (Project form client scripts), ECharts (loaded dynamically from `dinext_common`)
+- **Data**: Project Risk DocType (child table), risk reference data; Custom Fields on Project (Risks tab, matrix, risk table); integration with Project Budget, Account, Task
+- **Tools**: ruff (lint/format), pre-commit (ruff, eslint, prettier, pyupgrade)
 
 ## 🔧 Configuration
 
-Отдельного конфигурационного файла приложения в коде нет. Настройка ведётся в стандартном интерфейсе Frappe/ERPNext:
+There is no separate application configuration file in the code. Configuration is managed through the standard Frappe/ERPNext interface:
 
-- Справочники рисков (Risk Level, Risk Impact, Risk Probability и др.) настраиваются в соответствующих DocType; при миграции подтягиваются данные из fixtures.
-- Custom Fields и скрипты модуля Dinext Risk Management также экспортируются в fixtures и применяются при миграции.
-- Для доступа к определению DocType и скриптам может потребоваться включённый Developer Mode.
+- Risk reference data (Risk Level, Risk Impact, Risk Probability, etc.) is configured in the corresponding DocTypes; fixture data is loaded during migration.
+- Custom Fields and scripts in the Dinext Risk Management module are also exported to fixtures and applied during migration.
+- Developer Mode may be required to access DocType definitions and scripts.
 
 ## ✅ Requirements
 
-- **Frappe** (версия, совместимая с вашим bench)
-- **ERPNext** или среда, в которой есть DocType: Project, Project Budget, Account, Task
+- **Frappe** (a version compatible with your bench)
+- **ERPNext**, or an environment containing these DocTypes: Project, Project Budget, Account, Task
 - **Python** >= 3.10
-- Опционально: **Dinext Projects** (периоды бюджета, меню «Рассчитать прогноз»), **Dinext Common** (ECharts для матрицы и donut)
-- Для разработки: **pre-commit** (см. Contributing)
+- Optional: **Dinext Projects** (budget periods, Calculate Forecast menu), **Dinext Common** (ECharts for the matrix and donut)
+- For development: **pre-commit** (see Contributing)
 
 ## 🤝 Contributing
 
-Проект использует pre-commit для форматирования и проверки кода. Установите [pre-commit](https://pre-commit.com/#installation) и включите его в репозитории:
+The project uses pre-commit for code formatting and checks. Install [pre-commit](https://pre-commit.com/#installation) and enable it in the repository:
 
 ```bash
 cd apps/dinext_risk_management
 pre-commit install
 ```
 
-В pre-commit настроены: **ruff**, **eslint**, **prettier**, **pyupgrade**.
+The pre-commit configuration includes **ruff**, **eslint**, **prettier**, **pyupgrade**.
 
 ## 📄 Documentation
 
-- [AGENTS.md](AGENTS.md) — руководство по разработке на Frappe в рамках приложения (DocTypes, MCP, фикстуры, контроллеры, клиентские скрипты).
-
-## ❤️ Acknowledgements
-
-- **Dinext** — издатель приложения
-- **Frappe Framework** и **ERPNext**
-- **Apache ECharts** — библиотека для матрицы рисков и круговых диаграмм
+- [AGENTS.md](AGENTS.md) — the guide to Frappe development within the application (DocTypes, MCP, fixtures, controllers, client scripts).
 
 ## 📝 Changelog
 
-Краткая сводка изменений по истории коммитов:
+A brief summary of changes from the commit history:
 
-- **Инициализация и база**: Initial commit, Initialize App; добавление модуля Dinext Risk Management с DocTypes (Project Risk, Risk Category, Risk Priority, Risk Impact, Risk Probability, Risk Level, Risk Mitigation Strategy) и fixtures.
-- **Матрица рисков**: добавление и доработка UI матрицы рисков на форме Project (тепловая карта, расчёт контрастного цвета подписи, поддержка светлой/тёмной темы, адаптивная вёрстка, resize observer); донат-чарты с выбором типа (категория, статус, приоритет, влияние, вероятность, уровень, стратегия, владелец, ответственный), палитры цветов для light/dark; фильтрация по выбранной ячейке матрицы и по срезу donut; правки разметки, отступов и пустых подписей.
-- **Контингентные резервы**: поля резервов в Project Risk (учётная статья, периодичность, метод сумма/процент, база); диалог резервов и интеграция расчёта в форму проекта; логика периодов (месяц/квартал/год/проект/задача), использование `get_budget_display_periods` при наличии; рефакторинг функций расчёта резервов и массовое сохранение через API.
-- **Интеграция с бюджетом**: реализация `reserve_budget.py` (поиск/создание Project Budget по проекту, счёту и размерностям; добавление резервов и установка прогноза по периодам); whitelist `bulk_save_reserve_budgets` для пакетного сохранения с фронта; доработка обработки размерностей и пакетных обновлений.
-- **Прочее**: обновление JSON Project Risk (link filters, зависимости полей); условное отображение пункта меню «Рассчитать прогноз»; правки fixtures и визуализации; удаление неиспользуемого файла project_pl.js (chore).
+- **Initialization and foundation**: Initial commit, Initialize App; addition of the Dinext Risk Management module with DocTypes (Project Risk, Risk Category, Risk Priority, Risk Impact, Risk Probability, Risk Level, Risk Mitigation Strategy) and fixtures.
+- **Risk matrix**: addition and refinement of the risk matrix UI on the Project form (heatmap, contrasting label color calculation, light/dark theme support, responsive layout, resize observer); donut charts with a dimension selector (category, status, priority, impact, probability, level, strategy, owner, responsible party), light/dark color palettes; filtering by the selected matrix cell and donut segment; markup, spacing and empty-label fixes.
+- **Contingency reserves**: reserve fields in Project Risk (accounting item, frequency, amount/percentage method, base); reserve dialog and calculation integration in the project form; period logic (month/quarter/year/project/task), use of `get_budget_display_periods` when available; refactoring of reserve calculation functions and bulk saving through the API.
+- **Budget integration**: implementation of `reserve_budget.py` (finding/creating Project Budget records by project, account and dimensions; adding reserves and setting forecasts by period); whitelisted `bulk_save_reserve_budgets` for batch saving from the frontend; refinement of dimension handling and batch updates.
+- **Other**: Project Risk JSON updates (link filters, field dependencies); conditional display of the Calculate Forecast menu item; fixture and visualization changes; removal of the unused project_pl.js file (chore).
 
 ## 🗂️ Repository Structure
 
 ```
 dinext_risk_management/
-├── .cursor/skills/readme-writer/   # Skill для генерации README
+├── .cursor/skills/readme-writer/   # README generation skill
 ├── .editorconfig
 ├── .eslintrc
 ├── .pre-commit-config.yaml
-├── AGENTS.md                       # Руководство по разработке
+├── AGENTS.md                       # Development guide
 ├── README.md
 ├── license.txt
-├── pyproject.toml                  # Метаданные и зависимости Python, ruff
-├── dinext_risk_management/        # Корень приложения Frappe
-│   ├── __init__.py                # Версия приложения
-│   ├── hooks.py                    # Конфигурация: fixtures, doctype_js, app_include_css
+├── pyproject.toml                  # Python metadata and dependencies, ruff
+├── dinext_risk_management/        # Frappe application root
+│   ├── __init__.py                # Application version
+│   ├── hooks.py                    # Configuration: fixtures, doctype_js, app_include_css
 │   ├── modules.txt
 │   ├── patches.txt
-│   ├── config/                    # Конфигурация Desk
-│   ├── dinext_risk_management/    # Модуль приложения
+│   ├── config/                    # Desk configuration
+│   ├── dinext_risk_management/    # Application module
 │   │   ├── __init__.py
-│   │   ├── reserve_budget.py       # API резервов, запись в Project Budget
+│   │   ├── reserve_budget.py       # Reserve API, writing to Project Budget
 │   │   └── doctype/
-│   │       ├── project_risk/       # Дочерняя таблица рисков проекта
+│   │       ├── project_risk/       # Project risk child table
 │   │       ├── risk_category/
 │   │       ├── risk_priority/
 │   │       ├── risk_impact/
 │   │       ├── risk_probability/
 │   │       ├── risk_level/
 │   │       └── risk_mitigation_strategy/
-│   ├── fixtures/                  # Экспорт: справочники, custom_field, client/server script, role
+│   ├── fixtures/                  # Exports: reference data, custom_field, client/server script, role
 │   ├── public/
 │   │   ├── css/project_risk_matrix.css
 │   │   └── js/
-│   │       ├── project-risk.js     # Резервы, периоды, диалог «Рассчитать прогноз»
-│   │       └── project-risk-charts.js  # Матрица рисков и donut (ECharts)
+│   │       ├── project-risk.js     # Reserves, periods, Calculate Forecast dialog
+│   │       └── project-risk-charts.js  # Risk matrix and donut (ECharts)
 │   ├── templates/
 │   └── www/
 ```
 
-- **dinext_risk_management/** — корневая папка приложения: `hooks.py` задаёт fixtures, подключение JS/CSS к форме Project и глобальные стили матрицы.
-- **dinext_risk_management/dinext_risk_management/** — Python-модуль: `reserve_budget.py` — расчёт и запись резервов в Project Budget, whitelist `bulk_save_reserve_budgets`; **doctype/** — DocType Project Risk (child table) и справочники рисков (JSON, контроллеры, тесты).
-- **fixtures/** — данные для миграции: справочники рисков, Custom Field (вкладка «Риски», матрица, таблица `custom_project_risks`), Client Script, Server Script, Role.
-- **public/js/** — клиентская логика формы Project: резервы по периодам и сохранение в бюджет (`project-risk.js`), матрица и donut с ECharts (`project-risk-charts.js`).
-- **public/css/** — стили блока матрицы рисков (сетка, панель donut, адаптивность).
+- **dinext_risk_management/** — application root: `hooks.py` defines fixtures, JS/CSS inclusion on the Project form and global matrix styles.
+- **dinext_risk_management/dinext_risk_management/** — Python module: `reserve_budget.py` calculates and writes reserves to Project Budget, with the whitelisted `bulk_save_reserve_budgets`; **doctype/** contains the Project Risk DocType (child table) and risk reference data (JSON, controllers, tests).
+- **fixtures/** — migration data: risk reference data, Custom Field (Risks tab, matrix, `custom_project_risks` table), Client Script, Server Script, Role.
+- **public/js/** — Project form client logic: reserves by period and budget saving (`project-risk.js`), matrix and donut with ECharts (`project-risk-charts.js`).
+- **public/css/** — risk matrix block styles (grid, donut panel, responsiveness).
 
 ## 🔗 Flow Chart
 
-Взаимодействие компонентов при работе с рисками и резервами:
+Component interaction when working with risks and reserves:
 
 ```mermaid
 flowchart TB
@@ -154,10 +150,10 @@ flowchart TB
   FindBudget --> ProjectBudget
 ```
 
-- Пользователь работает с формой Project (вкладка «Риски»). Таблица рисков (`custom_project_risks`) и скрипты `project-risk-charts.js` / `project-risk.js` загружаются для этой формы.
-- Матрица и donut строятся по данным Risk Impact, Risk Probability, Risk Level и таблице рисков; ECharts подгружается динамически (dinext_common).
-- При сохранении резервов фронт вызывает `bulk_save_reserve_budgets`; серверный модуль `reserve_budget.py` находит или создаёт документы Project Budget (по проекту, счёту и размерностям) и записывает суммы по периодам.
+- The user works with the Project form (Risks tab). The risk table (`custom_project_risks`) and the `project-risk-charts.js` / `project-risk.js` scripts are loaded for this form.
+- The matrix and donut are built from Risk Impact, Risk Probability, Risk Level and risk table data; ECharts is loaded dynamically (dinext_common).
+- When saving reserves, the frontend calls `bulk_save_reserve_budgets`; the server module `reserve_budget.py` finds or creates Project Budget documents (by project, account and dimensions) and writes amounts by period.
 
 ## License
 
-GNU GPL v3. Текст — в [license.txt](license.txt).
+GNU GPL v3. See [license.txt](license.txt) for the license text.
