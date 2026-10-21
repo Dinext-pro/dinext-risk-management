@@ -1,5 +1,25 @@
 [Русский](README.ru.md)
 
+<!-- dinext-presentation:start -->
+<p align="center">
+  <a href="https://dinext.ru"><img src="docs/assets/readme/dinext-logo.png" alt="Dinext" width="128"></a>
+</p>
+<h1 align="center">Dinext Risk Management</h1>
+
+<hr>
+
+<p align="center">Register project risks, assess probability and impact, and track responses using a risk matrix and register.</p>
+
+<p align="center">
+  <img src="docs/assets/readme/overview.png" alt="Risk matrix and register for a demonstration project." width="960">
+</p>
+<p align="center"><sub>Risk matrix and register for a demonstration project.</sub></p>
+
+<p align="center">
+  <a href="https://dinext.ru">Website</a> · <a href="https://docs.dinext.ru">Documentation</a>
+</p>
+<!-- dinext-presentation:end -->
+
 # Dinext Risk Management
 
 ## 📖 Overview
