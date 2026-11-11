@@ -6,6 +6,6 @@
   "frontend_tests": false,
   "skip_test_records": true,
   "dependency_revisions": {
-    "dinext_common": "cbb6245afd43adc818eb2bbddff8cd98e4682df0"
+    "dinext_common": "3d80cb565d4e533719f3703671e286238d0c9d00"
   }
 }

@@ -30,6 +30,6 @@ jobs:
     name: Validation
     uses: Dinext-pro/dinext-common/.github/workflows/dinext-reusable.yml@main
     with:
-      support_ref: cbb6245afd43adc818eb2bbddff8cd98e4682df0
+      support_ref: 3d80cb565d4e533719f3703671e286238d0c9d00
       mode: frappe-app
       frontend_tests: false
