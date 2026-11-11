@@ -9,16 +9,7 @@ import frappe
 
 APP_NAME = 'dinext_risk_management'
 
-HUB_ITEMS = (
-	{
-		"section": 'Scope & Governance',
-		"element_type": 'DocType',
-		"target": 'Project Risk',
-		"label": 'Project Risk',
-		"description": 'Tracks risk category, impact, probability, response strategy, ownership, and financial reserves.',
-		"icon": 'solid-warning',
-	},
-)
+HUB_ITEMS = ()  # Existing saved rows are retained; no new default contribution.
 
 
 def register_dinext_hub_items() -> None:
